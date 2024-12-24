@@ -1,0 +1,24 @@
+{
+    "Creatures": [
+        {
+            "name": "Test2",
+            "initiative": 234,
+            "hp": 3,
+            "ac": 1,
+            "res": [],
+            "vul": [],
+            "conditions": []
+        },
+        {
+            "name": "Test1",
+            "initiative": 3,
+            "hp": 2,
+            "ac": 4,
+            "res": [],
+            "vul": [],
+            "conditions": []
+        }
+    ],
+    "Current Round": 1,
+    "Current Turn": 0
+}

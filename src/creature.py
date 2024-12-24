@@ -1,13 +1,13 @@
 #Creature class creates a creature along with 
 class Creature:
-    def __init__(self, name, initiative, hp, ac, res = None, vul=None ):
+    def __init__(self, name, initiative, hp, ac, res=None, vul=None, conditions=None):
         self.name = name
         self.initiative = initiative
         self.hp = hp
         self.ac = ac
         self.res = res or []
         self.vul = vul or []
-        self.conditions = []
+        self.conditions = conditions or []
 
     def damage(self, dmg, dmg_type=None):
 
