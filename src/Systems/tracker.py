@@ -1,3 +1,5 @@
+#Author: Brighton Gannaway
+
 import sys
 import os
 
@@ -15,6 +17,16 @@ class InititativeTracker:
         self.turn_index = 0
         self.history = Undo_Redo_Manager()
 
+    """
+    Sorts the creatures list by their initiative values in descending order.
+
+    Uses the `sort()` method with a lambda function to determine the sorting key.
+    The lambda function extracts the `initiative` attribute from each creature.
+    """
+
+    def sort_initiative(self):
+        self.creatures.sort(key=lambda c: c.initiative, reverse=True)
+    
     def add_creature(self):
         #TODO add roll or input to intitiative
         #TODO add resistance and vulnerabilties input 
@@ -24,38 +36,45 @@ class InititativeTracker:
         if name == "":
             print("Your creature must have a name. Try again")
             return
+          
         try:
             initiative = int(input("Initiative: "))
             hp = int(input("HP: "))
             ac = int(input("AC: "))
         except ValueError:
             print("Please input an acceptable value. Try Again")
-            return
+            return 
+   
 
         self.creatures.append(Creature(name, initiative, hp, ac))
         self.sort_initiative()
 
+
     def remove_creature(self):
         print("Available Creatures: ", *(Creature.name for Creature in self.creatures), sep=", ")
-        target = input("Name: ")
-        for creature in self.creatures:
-            if target == creature.name:
-                self.creatures.remove(creature)
-                return
-        print(f"{target} not found, please try again")
+        target = self.search_creature()
+        if target: self.creatures.remove(target)
     
+
+    #Returns a tuple: T(0) is the creature object and T(1) is a boolean reffering to if that creature exists
+    #Assists in stability as it allows the searching to be DRY but also prevents bugs from cases that a creature wasn't found
     def search_creature(self):
         target_name = input("Target Creature: ")
+
+        #option if targeted creature is an index
+        #The returned is a tuple since
+        if target_name.isnumeric() and int(target_name) < len(self.creatures):
+            return self.creatures[int(target_name)]
+        elif target_name.isnumeric():
+            print(f"Target at index: {target_name} is out of bounds")
+
         #Use an iterator to check if the targeted creature exists
         target = next((c for c in self.creatures if c.name == target_name), None)
         if not target: 
-            print("Creature Not Found")
-            return
+            print(f"{target_name}Creature Not Found")
+            return None
         else:
             return target
-
-    def sort_initiative(self):
-        self.creatures.sort(key=lambda c: c.initiative, reverse=True)
 
 #--------------Display Order is unused--------------#
     def display_order(self):
@@ -76,16 +95,17 @@ class InititativeTracker:
         target = self.search_creature()
 
         if not target:
-            return
+            return    
         
         style = input("Damage or Heal: ")
-        if style.lower() == "damage":
+        #damage condition looks for amount and type and goes into creature class to damage said creature
+        if style.lower() == "damage" or style.lower() == "d":
             damage = int(input("Damage Amount: "))
             damage_type = input("Damage Type(if any): ")
             real_damage = target.damage(damage, damage_type)
             print(f"{target.name} took {real_damage} damage. Remaining HP: {target.hp}")
 
-        elif style.lower() == "heal":
+        elif style.lower() == "heal" or style.lower() == "h":
             healing_amount = int(input("Healing Amount: "))
             healing = target.heal(healing_amount)
             print(f"{target.name} received {healing} healing. Remaining HP: {target.hp}")
@@ -95,11 +115,6 @@ class InititativeTracker:
             return
     
     def manage_conditions(self):
-        conditions = ["blinded", "charmed", "defeaned", 
-                      "frightened", "grappled", "incapacitated",
-                      "invisible","paralyzed", "petrified",
-                      "poisoned", "prone", "restrained", 
-                      "Unconscious"]
         
         target = self.search_creature()
         if not target:
@@ -108,16 +123,24 @@ class InititativeTracker:
         condition_action = input("Add or Remove conditions: ")
         condition = input("Condition: ")
 
-        if conditions not in conditions:
+        if condition not in target.CONDITIONS:
             print(f"{condition} is an invalid condition")
             return
 
         if condition_action.lower() == "add":
-            target.add_condition(condition)
+            target.add_condition(condition.lower())
         elif condition_action.lower() == "remove":
-            target.remove_condition(condition)
+            target.remove_condition(condition.lower())
         else:
             print("Invalid action please try again")
+
+    def manage_initiatives(self):
+        for creature in self.creatures:
+            initiative = input(f"Initiative of {creature.name}: ").strip()
+            while not initiative.isnumeric():
+                initiative = input(f"Initaitive must be a number, Initiative of {creature.name}: ")
+            creature.initiative = int(initiative)    
+        self.sort_initiative()
 
     def next_turn(self):
         #prevents crash if moving turn on empty table
@@ -127,16 +150,15 @@ class InititativeTracker:
         if self.turn_index == 0:
             self.round += 1
 
-
-
-
-#------------------JSON & HISTORY HANDELING--------------------------------------------#
+#------------------FILE FORMATTING --------------------------------------------#
 
     def to_dict(self):
         dict = {"Creatures":[creature.__dict__ for creature in self.creatures],
                     "Current Round" : self.round,
                     "Current Turn" : self.turn_index,
                     }
+
+        
         return dict
     
     def from_dict(self, dict):
@@ -144,6 +166,8 @@ class InititativeTracker:
         self.sort_initiative()
         self.round = dict["Current Round"]
         self.turn_index = dict["Current Turn"]
+
+#----------------- JSON HANDELING -----------------------------------------------#
         
     #Saves current state of intiative tracker to file (JSON)
     def save_to_file(self, filename="initiative_data.json"):
@@ -162,7 +186,9 @@ class InititativeTracker:
             print(f"Error {filename} not found")
         except json.JSONDecodeError:
             print(f"Error {filename} has invalid JSON")
-    
+
+#----------------- HISTORY HANDELING ------------------------------------------#
+
     def save_state(self):
         self.history.save_state(self.to_dict())
 
@@ -181,9 +207,9 @@ class InititativeTracker:
 
     def get_history_items(self):
         return self.history.get_history_length()
-
-
     
+    def display_history(self):
+        return self.history.get_history()
 
 #--------------------------------------------------------------------------#
 
