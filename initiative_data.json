@@ -1,24 +1,64 @@
 {
     "Creatures": [
         {
-            "name": "Test2",
-            "initiative": 234,
-            "hp": 3,
-            "ac": 1,
+            "name": "Val Gooften",
+            "initiative": 6,
+            "hp": 45,
+            "ac": 16,
             "res": [],
             "vul": [],
             "conditions": []
         },
         {
-            "name": "Test1",
-            "initiative": 3,
-            "hp": 2,
-            "ac": 4,
+            "name": "Jack Marrow",
+            "initiative": 5,
+            "hp": 31,
+            "ac": 12,
             "res": [],
+            "vul": [],
+            "conditions": []
+        },
+        {
+            "name": "Morbius",
+            "initiative": 4,
+            "hp": 68,
+            "ac": 17,
+            "res": [
+                "poison"
+            ],
+            "vul": [],
+            "conditions": []
+        },
+        {
+            "name": "BIRBA of Ark",
+            "initiative": 3,
+            "hp": 39,
+            "ac": 16,
+            "res": [],
+            "vul": [],
+            "conditions": []
+        },
+        {
+            "name": "Bobenheimer",
+            "initiative": 2,
+            "hp": 53,
+            "ac": 17,
+            "res": [],
+            "vul": [],
+            "conditions": []
+        },
+        {
+            "name": "Akiara",
+            "initiative": 1,
+            "hp": 49,
+            "ac": 14,
+            "res": [
+                "cold"
+            ],
             "vul": [],
             "conditions": []
         }
     ],
     "Current Round": 1,
-    "Current Turn": 0
+    "Current Turn": 4
 }

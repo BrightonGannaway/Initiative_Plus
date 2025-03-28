@@ -4,11 +4,13 @@ class Undo_Redo_Manager:
     def __init__(self):
         self.undo_Stack = []
         self.redo_Stack = []
-        self.HISTORY_LIMIT = 10 #Max history depth = 10
+        self.HISTORY_LIMIT = 20 #Max history depth = 20
+        self.limit = lambda h: h.pop(0) if len(h) > self.HISTORY_LIMIT else None
 
     def save_state(self, current_state):
         """Save the current state to the undo stack and clear redo."""
         self.undo_Stack.append(copy.deepcopy(current_state))
+        self.limit(self.undo_Stack)
         self.redo_Stack.clear()
         
         if (len(self.undo_Stack) > self.HISTORY_LIMIT): 
@@ -17,6 +19,7 @@ class Undo_Redo_Manager:
     def undo(self, current_state):
         if self.undo_Stack:
             self.redo_Stack.append(copy.deepcopy(current_state))
+            self.limit(self.undo_Stack)
             return self.undo_Stack.pop()
         return current_state
     
@@ -36,3 +39,5 @@ class Undo_Redo_Manager:
 
     def get_history_length(self):
         return ("Undo Length: ", len(self.undo_Stack))
+    
+    

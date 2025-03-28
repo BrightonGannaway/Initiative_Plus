@@ -1,3 +1,5 @@
+#Author: Brighton Gannaway
+
 import sys
 import os
 
@@ -6,6 +8,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from Systems.undo_redo_manager import Undo_Redo_Manager
 from creature import Creature
+from constants import Constants
 import json
 
 class InititativeTracker:
@@ -15,77 +18,109 @@ class InititativeTracker:
         self.turn_index = 0
         self.history = Undo_Redo_Manager()
 
-    def add_creature(self):
-        #TODO add roll or input to intitiative
-        #TODO add resistance and vulnerabilties input 
-        name = input("Name: ")
+    """
+    Sorts the creatures list by their initiative values in descending order.
 
-        #Below Tests for acceptable values
-        if name == "":
-            print("Your creature must have a name. Try again")
-            return
-        try:
-            initiative = int(input("Initiative: "))
-            hp = int(input("HP: "))
-            ac = int(input("AC: "))
-        except ValueError:
-            print("Please input an acceptable value. Try Again")
-            return
+    Uses the `sort()` method with a lambda function to determine the sorting key.
+    The lambda function extracts the `initiative` attribute from each creature.
+    """
 
+    def sort_initiative(self):
+        
+        UnNoneInt = lambda c : c if c is not None else 0
+        unNoneStr = lambda c : c if c is not None else "~~~~~~~~~~~~~~~~~~~~~~~~" #want to keep null vlaues below all
+
+        self.creatures.sort(key=lambda c : UnNoneInt(c.initiative), reverse=True)
+        
+        
+        for i in range(len(self.creatures) - 1):
+
+            group_len = 1
+            while i < len(self.creatures) - 1 and (UnNoneInt(self.creatures[i].initiative) == UnNoneInt(self.creatures[i + 1].initiative)):
+                group_len = group_len + 1
+                i = i + 1
+            
+            if group_len > 1:
+                creature_group = self.creatures[i - group_len + 1: i + 1]
+                creature_group.sort(key=lambda c : unNoneStr(c.name))
+                self.creatures[i - group_len + 1: i + 1] = creature_group
+                group_len = 1
+
+    def add_creature(self, name=None, initiative=None, hp=None, ac=None):
         self.creatures.append(Creature(name, initiative, hp, ac))
+        
+    #initiative must be defualt 0 in order rot sort creatures 
+    #TODO: have orde rbe able to be overwridden
+    def manage_creature(self, index_r, name=None, initiative=0, hp=None, ac=None):
+        #removes copy of creature if it exists, note this doesnt currently work.
+        #perhaps add an identifier or make dynamic placement an attribute of that creature 
+        #Or have None creatures that have only thte placement value filled <- do this
+        self.creatures[index_r] = Creature(name, initiative, hp, ac)
         self.sort_initiative()
-
-    def remove_creature(self):
-        print("Available Creatures: ", *(Creature.name for Creature in self.creatures), sep=", ")
-        target = input("Name: ")
+        
         for creature in self.creatures:
-            if target == creature.name:
-                self.creatures.remove(creature)
-                return
-        print(f"{target} not found, please try again")
+            creature.print_creature()
+
+    #to manage individual changes to creatures 
+    def manage_creature(self, index_r, value_Type, value):
+
+        print("\nCreature length = ", len(self.creatures), "\n\n")
+        creature = self.creatures[index_r]
+
+        match value_Type:
+            case Constants.Table_Constants.kColumn_Name_Title:
+                creature.set_name(value)
+            case Constants.Table_Constants.kColumn_Initiative_Title:
+                creature.set_initiative(value)
+            case Constants.Table_Constants.kColumn_HP_Title:
+                creature.set_hp(value)
+            case Constants.Table_Constants.kColumn_AC_Title:
+                creature.set_ac(value)
+
+    def clear_creatures_contents(self):
+        length_saved = len(self.creatures)
+        self.creatures.clear()
+        for c in range(length_saved):
+            self.add_creature()
+
+
+    def remove_creature(self, index):
+        self.creatures.pop(index)
     
     def search_creature(self):
         target_name = input("Target Creature: ")
+
+        #option if targeted creature is an index
+        #The returned is a tuple since
+        if target_name.isnumeric() and int(target_name) < len(self.creatures):
+            return self.creatures[int(target_name)]
+        elif target_name.isnumeric():
+            print(f"Target at index: {target_name} is out of bounds")
+
         #Use an iterator to check if the targeted creature exists
         target = next((c for c in self.creatures if c.name == target_name), None)
         if not target: 
-            print("Creature Not Found")
-            return
+            print(f"{target_name}Creature Not Found")
+            return None
         else:
             return target
-
-    def sort_initiative(self):
-        self.creatures.sort(key=lambda c: c.initiative, reverse=True)
-
-#--------------Display Order is unused--------------#
-    def display_order(self):
-        print(self.creatures)
-        print(f"\nInitiative Order (Round {self.round})\n~~~~~~~~~~~~~~~~~~~~~~~~~")
-        #for loop below points to current round holder by indexing the creatures list
-        for i, Creature in enumerate(self.creatures):
-            if i == self.turn_index:
-                turn_marker = " <- Current Turn" 
-            else: 
-                turn_marker = ""
-            print(f"{Creature.name}: {Creature.hp} HP (AC: {Creature.ac}){turn_marker}\n")
-
-#--------------------------------------------------#
 
     def apply_damage(self):
 
         target = self.search_creature()
 
         if not target:
-            return
+            return    
         
         style = input("Damage or Heal: ")
-        if style.lower() == "damage":
+        #damage condition looks for amount and type and goes into creature class to damage said creature
+        if style.lower() == "damage" or style.lower() == "d":
             damage = int(input("Damage Amount: "))
             damage_type = input("Damage Type(if any): ")
             real_damage = target.damage(damage, damage_type)
             print(f"{target.name} took {real_damage} damage. Remaining HP: {target.hp}")
 
-        elif style.lower() == "heal":
+        elif style.lower() == "heal" or style.lower() == "h":
             healing_amount = int(input("Healing Amount: "))
             healing = target.heal(healing_amount)
             print(f"{target.name} received {healing} healing. Remaining HP: {target.hp}")
@@ -95,27 +130,23 @@ class InititativeTracker:
             return
     
     def manage_conditions(self):
-        conditions = ["blinded", "charmed", "defeaned", 
-                      "frightened", "grappled", "incapacitated",
-                      "invisible","paralyzed", "petrified",
-                      "poisoned", "prone", "restrained", 
-                      "Unconscious"]
         
         target = self.search_creature()
+        
         if not target:
             return
         
         condition_action = input("Add or Remove conditions: ")
         condition = input("Condition: ")
 
-        if conditions not in conditions:
+        if condition not in target.CONDITIONS:
             print(f"{condition} is an invalid condition")
             return
 
         if condition_action.lower() == "add":
-            target.add_condition(condition)
+            target.add_condition(condition.lower())
         elif condition_action.lower() == "remove":
-            target.remove_condition(condition)
+            target.remove_condition(condition.lower())
         else:
             print("Invalid action please try again")
 
@@ -128,22 +159,37 @@ class InititativeTracker:
             self.round += 1
 
 
+#--------------------Accessors-----------------------#
 
+    def get_creatures(self):
+        self.sort_initiative()
+        return self.creatures
+    
+    def get_round(self): 
+        return self.round
+    
+    def get_turn(self):
+        return self.turn_index
+    
+#-----------------Mutators-------------------------#
 
-#------------------JSON & HISTORY HANDELING--------------------------------------------#
+#------------------FILE FORMATTING --------------------------------------------#
 
     def to_dict(self):
-        dict = {"Creatures":[creature.__dict__ for creature in self.creatures],
+        dict = {Constants.Data_Constants.kDictionary_Creatures_List_Title:[creature.__dict__ for creature in self.creatures],
                     "Current Round" : self.round,
                     "Current Turn" : self.turn_index,
                     }
+
+        
         return dict
     
     def from_dict(self, dict):
         self.creatures = [Creature(**creature_data) for creature_data in dict["Creatures"]]
-        self.sort_initiative()
         self.round = dict["Current Round"]
         self.turn_index = dict["Current Turn"]
+
+#----------------- JSON HANDELING -----------------------------------------------#
         
     #Saves current state of intiative tracker to file (JSON)
     def save_to_file(self, filename="initiative_data.json"):
@@ -162,13 +208,14 @@ class InititativeTracker:
             print(f"Error {filename} not found")
         except json.JSONDecodeError:
             print(f"Error {filename} has invalid JSON")
-    
+
+#----------------- HISTORY HANDELING ------------------------------------------#
+
     def save_state(self):
         self.history.save_state(self.to_dict())
 
     def undo(self):
         new_dict = self.history.undo(self.to_dict())
-        print(new_dict)
         self.from_dict(new_dict)
         print(f"Tracker Updated: {self.creatures}, {self.round}, {self.turn_index}")
 
@@ -181,13 +228,11 @@ class InititativeTracker:
 
     def get_history_items(self):
         return self.history.get_history_length()
-
-
     
+    def display_history(self):
+        return self.history.get_history()
 
 #--------------------------------------------------------------------------#
-
-
 
 
         
