@@ -98,7 +98,6 @@ class Damage_Delegate(QStyledItemDelegate):
             event.accept()
         
         def endDamageTypeBox(event):
-            print("Damagebox lost focus")
             print(self.popup.hasFocus())
             if self.popup.hasFocus() or self.spin_box.hasFocus() or self.popup.isActiveWindow():
                 event.ignore()
@@ -106,26 +105,15 @@ class Damage_Delegate(QStyledItemDelegate):
             self.damage_Type_Box.close()
             event.accept()
         
-        def openDamageTypeBox(event):
-            print("Damage Box gained focus")
         
-        
-    
-            
 
         self.popup.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
         self.popup.focusOutEvent = closePopupOnFocusLoss
         self.spin_box.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
         self.spin_box.focusOutEvent = endSpinBoxFocus
         self.damage_Type_Box.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
-        self.damage_Type_Box.focusInEvent = openDamageTypeBox
         self.damage_Type_Box.focusOutEvent = endDamageTypeBox
 
-    
-
-
-            
-        
         #applies damage by finding cell hp
         def get_Current_HP():
             current_hp = model.data(index, Qt.ItemDataRole.DisplayRole)
@@ -139,7 +127,7 @@ class Damage_Delegate(QStyledItemDelegate):
         #multiuplying by factors of 2 for some reason 
         def apply_damage():
             print("Damaging: ", get_Current_HP(), "hp by: ", self.spin_box.value())
-            new_hp = (get_Current_HP() + self.spin_box.value())
+            new_hp = (get_Current_HP() - self.spin_box.value())
             model.setData(index, new_hp, Qt.ItemDataRole.EditRole)
             print("New HP -d: ", get_Current_HP())
             self.popup.close()
@@ -147,7 +135,7 @@ class Damage_Delegate(QStyledItemDelegate):
         #multiplying by factors of -3 for some reason
         def heal():
             print("Healing: ", get_Current_HP(), "hp by: ", self.spin_box.value())
-            new_hp = (get_Current_HP() - self.spin_box.value())
+            new_hp = (get_Current_HP() + self.spin_box.value())
             model.setData(index, new_hp, Qt.ItemDataRole.EditRole)
             print("New HP -h: ", get_Current_HP())
             self.popup.close()

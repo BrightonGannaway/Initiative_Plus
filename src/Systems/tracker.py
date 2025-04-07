@@ -87,47 +87,18 @@ class InititativeTracker:
     def remove_creature(self, index):
         self.creatures.pop(index)
     
-    def search_creature(self):
-        target_name = input("Target Creature: ")
-
-        #option if targeted creature is an index
-        #The returned is a tuple since
-        if target_name.isnumeric() and int(target_name) < len(self.creatures):
-            return self.creatures[int(target_name)]
-        elif target_name.isnumeric():
-            print(f"Target at index: {target_name} is out of bounds")
-
-        #Use an iterator to check if the targeted creature exists
-        target = next((c for c in self.creatures if c.name == target_name), None)
-        if not target: 
-            print(f"{target_name}Creature Not Found")
-            return None
+    def search_creature(self, index):
+        if index.isinstance(int):
+            return self.creatures[index]
+        elif index.isinstance(str):
+            return self.creatures(index)
         else:
-            return target
+            return False
 
-    def apply_damage(self):
+    def apply_damage(self, index, dmg):
+        self.creatures[index].damage(dmg)
 
-        target = self.search_creature()
 
-        if not target:
-            return    
-        
-        style = input("Damage or Heal: ")
-        #damage condition looks for amount and type and goes into creature class to damage said creature
-        if style.lower() == "damage" or style.lower() == "d":
-            damage = int(input("Damage Amount: "))
-            damage_type = input("Damage Type(if any): ")
-            real_damage = target.damage(damage, damage_type)
-            print(f"{target.name} took {real_damage} damage. Remaining HP: {target.hp}")
-
-        elif style.lower() == "heal" or style.lower() == "h":
-            healing_amount = int(input("Healing Amount: "))
-            healing = target.heal(healing_amount)
-            print(f"{target.name} received {healing} healing. Remaining HP: {target.hp}")
-
-        else:
-            print("Invalid input: please try again")
-            return
     
     def manage_conditions(self):
         

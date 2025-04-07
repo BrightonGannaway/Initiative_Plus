@@ -28,6 +28,10 @@ class Controller:
         self.save_state()
         self.tracker.remove_creature(row)
         return self.get_tracker_dict()
+    
+    def damage_Creature(self, row, dmg):
+        self.save_state()
+        self.tracker.apply_damage(row, dmg)
 
     def next_turn(self):
         self.save_state()

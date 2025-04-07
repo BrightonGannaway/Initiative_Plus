@@ -19,6 +19,7 @@ class Constants:
 
         kColumn_Conditions_Title = "Conditions"
         kColumn_Conditions_Type = "string"
+        kColumn_Conditions_Index = 4
 
         kColumns_Type_Dictionary = {
 
@@ -59,8 +60,20 @@ class Constants:
 
     class Proporties:
         KDamage_Types = (
+
         "acid", "bludgeoning", "cold", "fire", "force", 
         "lightning", "necrotic", "piercing", "poison", 
         "psychic", "radiant", "slashing", "thunder"
+
+        )
+
+        kConditions = (
+             
+        "blinded", "charmed", "defeaned", 
+        "frightened", "grappled", "incapacitated",
+        "invisible","paralyzed", "petrified",
+        "poisoned", "prone", "restrained", 
+        "unconscious"
+
         )
 

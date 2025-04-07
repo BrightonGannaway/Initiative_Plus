@@ -10,6 +10,8 @@ from PyQt6.QtCore import Qt
 from controller import Controller
 from constants import Constants
 from GUI.Delegates.Damage_Delegate import Damage_Delegate
+from GUI.Delegates.Options_Delegate import Options_Delegate
+from GUI.Delegates.Cell_Aware_Delegate import Cell_Aware_Delegate
 from GUI.Clickable_Image import Clickable_Image
 
 
@@ -59,7 +61,9 @@ class Initiative_Tracker_GUI(QMainWindow):
                                                 Constants.Table_Constants.kColumn_Conditions_Title
                                             ])
         
-        self.table.setItemDelegateForColumn(Constants.Table_Constants.kColumn_HP_Index, Damage_Delegate())
+        self.master_Delegate_Conditions = Cell_Aware_Delegate(self.table)
+        self.table.setItemDelegateForColumn(Constants.Table_Constants.kColumn_HP_Index, Damage_Delegate(self.table))
+        self.table.setItemDelegateForColumn(Constants.Table_Constants.kColumn_Conditions_Index, self.master_Delegate_Conditions)
         
         self.table.itemChanged.connect(self.table_updated)
         self.main_layout.addWidget(self.table, stretch=3)
@@ -182,6 +186,7 @@ class Initiative_Tracker_GUI(QMainWindow):
     #data should be a list of creatures or a creature itself
     #index of creature stored as creature name. Only exclusive to creature spot
     def add_creature_row(self, creatures=None):
+        self.master_Delegate_Conditions.register_delegate(self.table.rowCount(), Constants.Table_Constants.kColumn_Conditions_Index, Options_Delegate(self.table))
         self.table.insertRow(self.table.rowCount())
         self.controller.create_Blank_Creature()
 
@@ -189,8 +194,6 @@ class Initiative_Tracker_GUI(QMainWindow):
         current_row = self.table.currentRow()
         if current_row != -1:
             self.dict_to_table(self.controller.remove_Creature(current_row))
-
-
 
         #make sure to reset backround colors
         self.update_Row_Backround(self.current_turn)
