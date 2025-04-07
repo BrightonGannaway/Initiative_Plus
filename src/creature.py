@@ -25,10 +25,14 @@ class Creature:
         self.res = res or []
         self.vul = vul or []
 
+
         self.conditions = conditions or []
 
 
+
     def damage(self, dmg, dmg_type=None):
+        if dmg_type not in self.DAMAGE_TYPES:
+            dmg_type = None #makes invalid damage types none so only valids can be used
         if dmg_type not in self.DAMAGE_TYPES:
             dmg_type = None #makes invalid damage types none so only valids can be used
 
@@ -57,6 +61,8 @@ class Creature:
         self.ac = ac
     
     def add_condition(self, condition_type):
+        if condition_type.lower() in self.CONDITIONS and condition_type.lower() not in self.conditions:
+            self.conditions.append(condition_type.lower())
         if condition_type.lower() in self.CONDITIONS and condition_type.lower() not in self.conditions:
             self.conditions.append(condition_type.lower())
             return condition_type

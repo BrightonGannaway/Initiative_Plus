@@ -1,5 +1,7 @@
 #Author: Brighton Gannaway
 
+#Author: Brighton Gannaway
+
 import sys
 import os
 
@@ -121,6 +123,14 @@ class InititativeTracker:
         else:
             print("Invalid action please try again")
 
+    def manage_initiatives(self):
+        for creature in self.creatures:
+            initiative = input(f"Initiative of {creature.name}: ").strip()
+            while not initiative.isnumeric():
+                initiative = input(f"Initaitive must be a number, Initiative of {creature.name}: ")
+            creature.initiative = int(initiative)    
+        self.sort_initiative()
+
     def next_turn(self):
         #prevents crash if moving turn on empty table
         if len(self.creatures) == 0: 
@@ -153,12 +163,16 @@ class InititativeTracker:
                     }
 
         
+
+        
         return dict
     
     def from_dict(self, dict):
         self.creatures = [Creature(**creature_data) for creature_data in dict["Creatures"]]
         self.round = dict["Current Round"]
         self.turn_index = dict["Current Turn"]
+
+#----------------- JSON HANDELING -----------------------------------------------#
 
 #----------------- JSON HANDELING -----------------------------------------------#
         
@@ -182,6 +196,9 @@ class InititativeTracker:
 
 #----------------- HISTORY HANDELING ------------------------------------------#
 
+
+#----------------- HISTORY HANDELING ------------------------------------------#
+
     def save_state(self):
         self.history.save_state(self.to_dict())
 
@@ -199,6 +216,9 @@ class InititativeTracker:
 
     def get_history_items(self):
         return self.history.get_history_length()
+    
+    def display_history(self):
+        return self.history.get_history()
     
     def display_history(self):
         return self.history.get_history()
