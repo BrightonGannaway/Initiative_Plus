@@ -139,6 +139,7 @@ class Damage_Delegate(QStyledItemDelegate):
             model.setData(index, new_hp, Qt.ItemDataRole.EditRole)
             print("New HP -h: ", get_Current_HP())
             self.popup.close()
+            print("Healed")
 
         self.minus_button.clicked.connect(apply_damage)
         self.plus_button.clicked.connect(heal)
