@@ -2,8 +2,10 @@ import sys
 import os
 import copy
 
-from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QTableWidget, QTableWidgetItem, QTableView, QPushButton, QLabel
-from PyQt6.QtGui import QColor, QPixmap, QIcon, QMouseEvent
+from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, 
+                            QTableWidget, QTableWidgetItem, QTableView, QPushButton, 
+                            QLabel, QMenuBar, QMenu, QFileDialog)
+from PyQt6.QtGui import QColor, QPixmap, QIcon, QMouseEvent, QFont, QAction, QKeySequence
 from PyQt6.QtCore import Qt
 
 
@@ -37,12 +39,29 @@ class Initiative_Tracker_GUI(QMainWindow):
 
         #main window
         self.setWindowTitle("D&D Initiative Tracker ")
-        self.width = 757
-        self.height = 600
+        self.width = Constants.Table_Constants.kWidth
+        self.height = Constants.Table_Constants.kHeight
         self.setGeometry(100, 100, self.width, self.height)
         self.setMaximumHeight(self.height)
         self.setMaximumWidth(self.width)
-        
+
+        #menu bar options
+        self.menu = QMenuBar()
+        self.file = QMenu("File")
+        self.save_action = QAction("Save")
+        self.save_action.triggered.connect(self.save)
+        self.save_action.setShortcut(QKeySequence("Ctrl+S"))
+        self.saveAs_action = QAction("Save As...")
+        self.saveAs_action.triggered.connect(self.save_as)
+        self.saveAs_action.setShortcut(QKeySequence("Shift+Ctrl+S"))
+        self.open_action = QAction("Open")
+        self.open_action.triggered.connect(self.open)
+        self.open_action.setShortcut(QKeySequence("Ctrl+O"))
+        self.file.addAction(self.save_action)
+        self.file.addAction(self.saveAs_action)
+        self.file.addAction(self.open_action)
+        self.menu.addMenu(self.file)
+
 
         #PyQt requires central widget to base off all other widgets
         self.central_widget = QWidget()
@@ -105,7 +124,6 @@ class Initiative_Tracker_GUI(QMainWindow):
         self.verticle_button_layout.addWidget(self.sort_initiative_button)
 
         #Undo Redo Buttons
-
         self.undo_image_path = "assets/undo_button_IT.png"   
         self.redo_image_path = "assets/redo_button_IT.png"
         self.pixmap_undo = QPixmap(self.undo_image_path).scaled(self.width // 12, self.height // 12)
@@ -123,6 +141,12 @@ class Initiative_Tracker_GUI(QMainWindow):
         #add spacer to push buttons to top
         self.verticle_button_layout.addStretch()
         self.main_layout.addLayout(self.verticle_button_layout, stretch=1)
+
+        #display turn and round
+        self.round_display = QLabel()
+        self.round_display.setFont(Constants.Fonts.kRound_Display)
+        self.round_display.setText(f"Round: {self.current_round} | Turn: {self.current_turn + 1}")
+        self.verticle_button_layout.addWidget(self.round_display, alignment=Qt.AlignmentFlag.AlignBottom)
 
 
         #other values
@@ -203,6 +227,7 @@ class Initiative_Tracker_GUI(QMainWindow):
 
     def next_turn(self):
         self.dict_to_table(self.controller.next_turn())
+        self.round_display.setText(f"Round: {self.current_round } | Turn: {self.current_turn + 1}")
 
     def sort_initiative(self):
         self.dict_to_table(self.controller.sort_initiative())
@@ -297,19 +322,40 @@ class Initiative_Tracker_GUI(QMainWindow):
                 
                 #highlights row of current turn else it goes back to default colors
                 if row == current_turn:
-                    item.setBackground(Constants.Color.Lichen) 
+                    item.setBackground(Constants.Color.Lichen)
+                    item.setForeground(Constants.Color.Dark_Navy) 
                 elif row % 2 == 0:
                     item.setBackground(Constants.Color.Dark_Navy)
+                    item.setForeground(Constants.Color.Bluish_Gray)  
                 else:
-                    item.setBackground(Constants.Color.Pale_Dark_Navy)   
+                    item.setBackground(Constants.Color.Pale_Dark_Navy)
+                    item.setForeground(Constants.Color.Off_White)
 
         self.table.viewport().update()
         
 
+    #-----------------------------------#
+    #---------- Menu Methods -----------#
+    #-----------------------------------#
 
+    def save(self, file_path="initiative_data.json"):
+        self.controller.save_to_file(file_path)
+    
+    def save_as(self, file_path="initiative_data.json"):
+        file_path = QFileDialog.getSaveFileName(None, "Save As", "", "JSON Files (*.json);;All Files (*)")[0]
+        self.save(file_path)
+    
+    def open(self):
+        file_path = QFileDialog.getOpenFileName(None, "Open File", "", "JSON Files (*.json);;All Files (*)")[0]
+        self.dict_to_table(self.controller.load_from_file(file_path))
+
+    
+
+        
 
 
     def run(self):
+        self.menu.show()
         self.controller.save_state()
         self.show()
         self.pre_load_rows(3)

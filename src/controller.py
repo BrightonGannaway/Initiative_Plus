@@ -59,6 +59,13 @@ class Controller:
         self.save_state()
         self.tracker.add_creature()
 
+    def save_to_file(self, file_path):
+        self.tracker.save_to_file(file_path)
+    
+    def load_from_file(self, file_path="initiative_data.json"):
+        self.tracker.load_from_file(file_path)
+        return self.get_tracker_dict()
+
     def get_tracker_dict(self):
         return self.tracker.to_dict()
 

@@ -1,5 +1,5 @@
 
-from PyQt6.QtGui import QColor
+from PyQt6.QtGui import QColor, QFont
 
 class Constants:
     class Table_Constants:
@@ -30,6 +30,9 @@ class Constants:
                                     kColumn_Conditions_Title : kColumn_Conditions_Type
 
                                     }
+        
+        kWidth = 757
+        kHeight = 600
     
     class Data_Constants :
 
@@ -57,6 +60,11 @@ class Constants:
         Bluish_Gray = QColor("#8a9291")
         Off_White = QColor("#cdcdc2")
         Lichen = QColor("#6b8378")
+    
+    class Fonts:
+        kRound_Display = QFont()
+        kRound_Display.setFamily("Garamond")
+        kRound_Display.setPixelSize(23)
 
     class Proporties:
         KDamage_Types = (

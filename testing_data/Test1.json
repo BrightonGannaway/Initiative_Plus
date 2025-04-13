@@ -2,25 +2,25 @@
     "Creatures": [
         {
             "name": "Test",
+            "initiative": 12,
+            "hp": null,
+            "ac": null,
+            "res": [],
+            "vul": [],
+            "conditions": []
+        },
+        {
+            "name": "",
             "initiative": null,
-            "hp": null,
-            "ac": null,
+            "hp": 9342857,
+            "ac": 12,
             "res": [],
             "vul": [],
             "conditions": []
         },
         {
             "name": null,
-            "initiative": 12,
-            "hp": null,
-            "ac": null,
-            "res": [],
-            "vul": [],
-            "conditions": []
-        },
-        {
-            "name": null,
-            "initiative": 12,
+            "initiative": 6,
             "hp": null,
             "ac": null,
             "res": [],

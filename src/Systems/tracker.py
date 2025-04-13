@@ -178,6 +178,7 @@ class InititativeTracker:
         
     #Saves current state of intiative tracker to file (JSON)
     def save_to_file(self, filename="initiative_data.json"):
+        print("saving data to json file")
         with open(filename, "w") as file:
             json.dump(self.to_dict(), file, indent=4)
             print(f"Initiative Data saved to {filename}\nCurrent Round: {self.round}\nNumber of Creatures: {len(self.creatures)}\n\n")
