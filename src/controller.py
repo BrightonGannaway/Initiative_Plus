@@ -1,71 +1,96 @@
-#controller acts as a middleman between GUI and Tracker processing data
+#controller acts as a middleman between GUI and cls.tracker processing data
 
 from Systems.tracker import InititativeTracker
 from Systems.data_Processor import Data_Processor
 
+from constants import Constants
+
 class Controller:
 
-    def __init__(self):
-        self.processor = Data_Processor()
-        self.tracker = InititativeTracker()
-        pass
+    tracker = InititativeTracker()
+    processor = Data_Processor()
+    
 
-    #GUI -> Tracker methods
+    #GUI -> cls.tracker methods
 
     #make sure to have condition updates processed seperately
-    def update_Creature_Item(self, column_header, item):
-        self.save_state()
-        value = self.processor.get_Expected_Type(header=column_header, item=item)
-        self.tracker.manage_creature(item.row(), column_header, value)
-        return self.get_tracker_dict()
-
-    def clear_creatures(self):
-        self.save_state()
-        self.tracker.clear_creatures_contents()
-        return self.get_tracker_dict()
-
-    def remove_Creature(self, row):
-        self.save_state()
-        self.tracker.remove_creature(row)
-        return self.get_tracker_dict()
+    @classmethod
+    def update_Creature_Item(cls, column_header, item):
+        cls.save_state()
+        value = cls.processor.get_Expected_Type(header=column_header, item=item)
+        cls.tracker.manage_creature(item.row(), column_header, value)
+        return cls.get_tracker_dict()
     
-    def damage_Creature(self, row, dmg):
-        self.save_state()
-        self.tracker.apply_damage(row, dmg)
-
-    def next_turn(self):
-        self.save_state()
-        self.tracker.next_turn()
-        return self.get_tracker_dict() 
-
-    def sort_initiative(self):
-        self.save_state()
-        self.tracker.sort_initiative()
-        return self.get_tracker_dict()
+    @classmethod
+    def clear_creatures(cls):
+        cls.save_state()
+        cls.tracker.clear_creatures_contents()
+        return cls.get_tracker_dict()
     
-    def save_state(self):
-        self.tracker.save_state()
-
-    def undo(self):
-        self.tracker.undo()
-        return self.get_tracker_dict()
-
-    def redo(self):
-        self.tracker.redo()
-        return self.get_tracker_dict()  
-
-    #to be only called upon the creation of a new row
-    def create_Blank_Creature(self):
-        self.save_state()
-        self.tracker.add_creature()
-
-    def save_to_file(self, file_path):
-        self.tracker.save_to_file(file_path)
+    @classmethod
+    def remove_Creature(cls, row):
+        cls.save_state()
+        cls.tracker.remove_creature(row)
+        return cls.get_tracker_dict()
     
-    def load_from_file(self, file_path="initiative_data.json"):
-        self.tracker.load_from_file(file_path)
-        return self.get_tracker_dict()
+    @classmethod   
+    def damage_Creature(cls, row, dmg):
+        cls.save_state()
+        cls.tracker.apply_damage(row, dmg)
 
-    def get_tracker_dict(self):
-        return self.tracker.to_dict()
+    @classmethod
+    def next_turn(cls):
+        cls.save_state()
+        cls.tracker.next_turn()
+        return cls.get_tracker_dict() 
+    
+    @classmethod
+    def sort_initiative(cls):
+        cls.save_state()
+        cls.tracker.sort_initiative()
+        return cls.get_tracker_dict()
+    
+    @classmethod    
+    def save_state(cls):
+        cls.tracker.save_state()
+
+    @classmethod
+    def undo(cls):
+        cls.tracker.undo()
+        return cls.get_tracker_dict()
+    
+    @classmethod
+    def redo(cls):
+        cls.tracker.redo()
+        return cls.get_tracker_dict()  
+
+    @classmethod    #to be only called upon the creation of a new row - method acts weird when loading data
+    def create_Blank_Creature(cls):
+        cls.save_state()
+        cls.tracker.add_creature()
+
+    @classmethod
+    def save_to_file(cls, file_path):
+        cls.tracker.save_to_file(file_path)
+
+    @classmethod    
+    def load_from_file(cls, file_path="initiative_data.json"):
+        cls.tracker.load_from_file(file_path)
+        return cls.get_tracker_dict()
+    
+    @classmethod
+    def get_tracker_dict(cls):
+        print("GUI accessed tracker dict")
+        return cls.tracker.to_dict()
+    
+    @classmethod
+    def get_tracker_creature_list_length(cls):
+        return len(cls.tracker.creatures)
+    
+    @classmethod    #delegate calls - allows a backdoor for GUI delegates to manipulate cls.tracker data
+    def delegate_options_call(cls, call, index, value):
+        match call:
+            case Constants.Delegate_Options.kConditions_Command_Call:
+                cls.tracker.manage_creature(index, Constants.Table_Constants.kColumn_Conditions_Title, value)
+                return cls.get_tracker_dict()
 

@@ -66,7 +66,9 @@ class InititativeTracker:
     #to manage individual changes to creatures 
     def manage_creature(self, index_r, value_Type, value):
 
-        print("\nCreature length = ", len(self.creatures), "\n\n")
+        print("\nCreature length = ", len(self.creatures))
+        print("Searching index: ", index_r)
+        print("Using tracker: ", self)
         creature = self.creatures[index_r]
 
         match value_Type:
@@ -78,6 +80,8 @@ class InititativeTracker:
                 creature.set_hp(value)
             case Constants.Table_Constants.kColumn_AC_Title:
                 creature.set_ac(value)
+            case Constants.Table_Constants.kColumn_Conditions_Title:
+                creature.set_conditions(value)
 
     def clear_creatures_contents(self):
         length_saved = len(self.creatures)
@@ -161,10 +165,6 @@ class InititativeTracker:
                     "Current Round" : self.round,
                     "Current Turn" : self.turn_index,
                     }
-
-        
-
-        
         return dict
     
     def from_dict(self, dict):

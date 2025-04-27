@@ -1,4 +1,4 @@
-from PyQt6.QtWidgets import QStyledItemDelegate, QFrame, QVBoxLayout, QCheckBox, QStyle, QStyleOptionButton, QDialog
+from PyQt6.QtWidgets import QStyledItemDelegate, QFrame, QVBoxLayout, QCheckBox, QStyle, QStyleOptionButton, QDialog, QTableWidgetItem
 from PyQt6.QtCore import Qt, QRect
 from constants import Constants
 

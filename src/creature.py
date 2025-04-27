@@ -4,7 +4,7 @@ from rich.style import Style
 
 class Creature:
 
-    CONDITIONS = {"blinded", "charmed", "defeaned", 
+    CONDITIONS = {"blinded", "charmed", "deafened", 
                     "frightened", "grappled", "incapacitated",
                       "invisible","paralyzed", "petrified",
                       "poisoned", "prone", "restrained", 
@@ -24,8 +24,6 @@ class Creature:
         self.ac = ac
         self.res = res or []
         self.vul = vul or []
-
-
         self.conditions = conditions or []
 
 
@@ -59,6 +57,9 @@ class Creature:
     
     def set_ac(self, ac):
         self.ac = ac
+    
+    def set_conditions(self, con):
+        self.conditions = con
     
     def add_condition(self, condition_type):
         if condition_type.lower() in self.CONDITIONS and condition_type.lower() not in self.conditions:

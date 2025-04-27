@@ -56,7 +56,7 @@ class Damage_Delegate(QStyledItemDelegate):
         self.spin_box.setFixedSize(popup_width // 2, popup_height // 3)
 
         self.damage_Type_Box = QComboBox()
-        self.damage_Type_Box.addItems(Constants.Proporties.KDamage_Types)
+        self.damage_Type_Box.addItems(Constants.Properties.KDamage_Types)
         self.damage_Type_Box.setFocus()
         self.damage_Type_Box.setFixedSize(popup_width // 2, popup_height // 4)
 

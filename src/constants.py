@@ -66,7 +66,11 @@ class Constants:
         kRound_Display.setFamily("Garamond")
         kRound_Display.setPixelSize(23)
 
-    class Proporties:
+        kCell_Display = QFont()
+        kCell_Display.setFamily("Garamond")
+        kCell_Display.setPixelSize(14)
+
+    class Properties:
         KDamage_Types = (
 
         "acid", "bludgeoning", "cold", "fire", "force", 
@@ -77,11 +81,33 @@ class Constants:
 
         kConditions = (
              
-        "blinded", "charmed", "defeaned", 
+        "blinded", "charmed", "deafened", 
         "frightened", "grappled", "incapacitated",
         "invisible","paralyzed", "petrified",
         "poisoned", "prone", "restrained", 
         "unconscious"
 
         )
+    
+    class Delegate_Options:
+        kConditions_Command_Call = "conditionsCALL"
+        kResistances_Command_Call = "resistanceCALL"
+        kVulnerabilities_Command_Call = "vulnerabiltyCALL"
+
+    class Display_Constants:
+        kCondition_HTML_Color_Format_Single_Digit_Dict = {
+            "blinded" : "<font color='black'>B</font> ",
+            "charmed" : "<font color='pink'>C</font> ",
+            "deafened" : "<font color='gray'>D</font> ",
+            "frightened" : "<font color='maroon'>F</font> ",
+            "grappled" : "<font color='saddlebrown'>G</font> ",
+            "incapacitated" : "<font color='darkslategrey'>I</font> ",
+            "invisible" : "<font color='white'>I</font> ",
+            "paralyzed" : "<font color='yellow'>P</font> ",
+            "petrified" : "<font color='rosybrown'>P</font> ",
+            "poisoned" : "<font color='seagreen'>P</font> ",
+            "prone" : "<font color='palevioletred'>P</font> ",
+            "restrained" : "<font color='palegoldenrod'>R</font> ",
+            "unconscious" : "<font color='purple'>U</font> "
+        }
 

@@ -4,9 +4,9 @@ import copy
 
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, 
                             QTableWidget, QTableWidgetItem, QTableView, QPushButton, 
-                            QLabel, QMenuBar, QMenu, QFileDialog)
+                            QLabel, QMenuBar, QMenu, QFileDialog, QMessageBox, QAbstractItemView)
 from PyQt6.QtGui import QColor, QPixmap, QIcon, QMouseEvent, QFont, QAction, QKeySequence
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, pyqtSignal, pyqtBoundSignal, QModelIndex, pyqtSlot
 
 
 from controller import Controller
@@ -15,6 +15,7 @@ from GUI.Delegates.Damage_Delegate import Damage_Delegate
 from GUI.Delegates.Options_Delegate import Options_Delegate
 from GUI.Delegates.Cell_Aware_Delegate import Cell_Aware_Delegate
 from GUI.Clickable_Image import Clickable_Image
+from GUI.Popups.Error_Popup import Error_Popup
 
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))) 
@@ -34,6 +35,7 @@ class Initiative_Tracker_GUI(QMainWindow):
 
         self.current_turn = 0
         self.current_round = 1
+        self.max_rows = 0
 
         super().__init__()
 
@@ -72,6 +74,8 @@ class Initiative_Tracker_GUI(QMainWindow):
         self.table = QTableWidget()
         self.table.setColumnCount(5)
         self.table.setAlternatingRowColors(True)
+        # self.table.setDragEnabled(True)
+        # self.table.acceptDrops()
         self.table.setHorizontalHeaderLabels([
                                                 Constants.Table_Constants.kColumn_Name_Title, 
                                                 Constants.Table_Constants.kColumn_Initiative_Title, 
@@ -81,6 +85,7 @@ class Initiative_Tracker_GUI(QMainWindow):
                                             ])
         
         self.master_Delegate_Conditions = Cell_Aware_Delegate(self.table)
+        self.condition_delegates = {}
         self.table.setItemDelegateForColumn(Constants.Table_Constants.kColumn_HP_Index, Damage_Delegate(self.table))
         self.table.setItemDelegateForColumn(Constants.Table_Constants.kColumn_Conditions_Index, self.master_Delegate_Conditions)
         
@@ -163,30 +168,25 @@ class Initiative_Tracker_GUI(QMainWindow):
      
 
 
-
-    def pre_load_rows(self, preload_amt):
-        for i in range(preload_amt):
-            self.add_creature_row()
-
     #unused, for debugging purpose
-    def configureMatrix(self):
+    # def configureMatrix(self):
 
-        self.creature_Matrix.clear()
+    #     self.creature_Matrix.clear()
 
-        for row in range(self.table.rowCount()):
-            creature_dict = {}
-            for column in range(self.table.columnCount()):
-                header = self.table.horizontalHeaderItem(column).text()
-                item = self.table.item(row,column)
-                if item:
-                    creature_dict[header] = value
+    #     for row in range(self.table.rowCount()):
+    #         creature_dict = {}
+    #         for column in range(self.table.columnCount()):
+    #             header = self.table.horizontalHeaderItem(column).text()
+    #             item = self.table.item(row,column)
+    #             if item:
+    #                 creature_dict[header] = value
 
-                else:
-                    value = ""
-                    creature_dict[self.table.horizontalHeaderItem(column).text()] = value
+    #             else:
+    #                 value = ""
+    #                 creature_dict[self.table.horizontalHeaderItem(column).text()] = value
 
-            self.creature_Matrix.append(copy.deepcopy(creature_dict))
-            creature_dict.clear()
+    #         self.creature_Matrix.append(copy.deepcopy(creature_dict))
+    #         creature_dict.clear()
     
 
     #-----------------------------------#
@@ -206,13 +206,24 @@ class Initiative_Tracker_GUI(QMainWindow):
 
 
             
-    #table methods
+    #-----------------------------------#
+    #--------  table methods  ----------#
+
+    #-----------------------------------#
     #data should be a list of creatures or a creature itself
     #index of creature stored as creature name. Only exclusive to creature spot
-    def add_creature_row(self, creatures=None):
-        self.master_Delegate_Conditions.register_delegate(self.table.rowCount(), Constants.Table_Constants.kColumn_Conditions_Index, Options_Delegate(self.table))
+    #update tracker parameter used as caution if tracker already has data beyond table data. ex: when loading from a filled file
+    def add_creature_row(self, creatures=None, update_tracker=True):
+        op_delegate = Options_Delegate(self.table)
+        op_delegate.emmited_value.connect(self.options_delegate_receiver)
+        self.condition_delegates[(self.table.rowCount(), Constants.Table_Constants.kColumn_Conditions_Index)] = op_delegate
+        self.master_Delegate_Conditions.register_delegate(self.table.rowCount(), Constants.Table_Constants.kColumn_Conditions_Index, op_delegate)
         self.table.insertRow(self.table.rowCount())
-        self.controller.create_Blank_Creature()
+        print("update tracker: ", update_tracker)
+        if update_tracker:
+            self.controller.create_Blank_Creature()
+            print("adding blank creature: should be 3")
+        #self.max_rows += 1
 
     def remove_selected_row(self):
         current_row = self.table.currentRow()
@@ -240,13 +251,16 @@ class Initiative_Tracker_GUI(QMainWindow):
         print("redo Attmepted")
         self.dict_to_table(self.controller.redo())
 
-    def dict_to_table(self, dict):
+    #see add_creature method for docs on update_tracker
+    def dict_to_table(self, dict, update_tracker=True):
 
         #self.load_stylesheet()
         self.is_Program_Cell_Change = True
 
+        #name of the list that holds all the creatures 
         C_list_name = Constants.Data_Constants.kDictionary_Creatures_List_Title
 
+        #all these are the keys used in the json that are attached to the values corresponded
         C_name_key = Constants.Data_Constants.kDictionary_Creatures_List_name_Title
         C_initiative_key = Constants.Data_Constants.kDictionary_Creatures_List_initiative_Title
         C_hp_key = Constants.Data_Constants.kDictionary_Creatures_List_hp_Title
@@ -255,38 +269,56 @@ class Initiative_Tracker_GUI(QMainWindow):
 
         row_count = self.table.rowCount()
         dict_row_count = len(dict[C_list_name])
-        print("Expecting rows: ", dict_row_count)
 
         #add and delete rows only when necessary
         if (dict_row_count > row_count):
-            for _ in range(dict_row_count - row_count):
-                self.table.insertRow(self.table.rowCount())
+            for r in range(dict_row_count - row_count):
+                print("update tracker: ", update_tracker)
+                self.add_creature_row(update_tracker=update_tracker)
+                #self.table.insertRow(self.table.rowCount())
         elif (row_count > dict_row_count):
             for _ in range(row_count - dict_row_count):
                 self.table.removeRow(self.table.rowCount() - 1)
 
         for row, creature in enumerate(dict[C_list_name]):
-            for col, key in enumerate([C_name_key, C_initiative_key, C_hp_key, C_ac_key, C_condtions_key]):
+            # enumerate through each column and name of column
+            for col, key in enumerate([C_name_key, C_initiative_key, C_hp_key, C_ac_key, C_condtions_key]): 
                 item = self.table.item(row, col) 
 
                 creature_attribute = creature[key]
                 updated_value = ""
 
 
-                #checks for empty list: TODO should be replaced by formatting to string in controller
-                if isinstance(creature_attribute, list) and len(creature_attribute) == 0:
+                #checks for empty list: TODO should be replaced by formatting to string in controller, conditon key check reverts to "" since conditions is displayed differently
+                if (isinstance(creature_attribute, list) and len(creature_attribute) == 0) or key == C_condtions_key:
                     updated_value = ""
                 else:
                     updated_value = str(creature_attribute) if creature_attribute is not None else ""
-
                 
 
                 #print(f"updating row: {row}, col: {col} with value {updated_value}\n")
-                
-                if item is None:
-                    self.table.setItem(row, col, QTableWidgetItem(updated_value))
-                elif item.text() != updated_value:
-                    item.setText(updated_value)
+                self.verify_item_and_display_text(item, row, col, updated_value)
+
+            #handle option delegates
+            con_delegate = self.condition_delegates.get((row, Constants.Table_Constants.kColumn_Conditions_Index))
+            con_delegate.set_saved_conditions(creature[C_condtions_key])
+
+            conditions_display_sring = ""
+            for c in creature[C_condtions_key]:
+                if c in Constants.Properties.kConditions:
+                    conditions_display_sring = conditions_display_sring + Constants.Display_Constants.kCondition_HTML_Color_Format_Single_Digit_Dict[c]
+            
+            #self.verify_item_and_display_text(item, row, Constants.Table_Constants.kColumn_Conditions_Index, conditions_display_sring)
+            item = self.table.item(row, Constants.Table_Constants.kColumn_Conditions_Index)
+            if item is None:
+                self.table.setItem(row, Constants.Table_Constants.kColumn_Conditions_Index, QTableWidgetItem())
+
+            #userrole inlays html without person actually seeing it
+            item.setData(Qt.ItemDataRole.UserRole, conditions_display_sring)
+
+
+
+
         
         self.current_round = dict["Current Round"]
         self.current_turn = dict["Current Turn"]
@@ -344,10 +376,41 @@ class Initiative_Tracker_GUI(QMainWindow):
     def save_as(self, file_path="initiative_data.json"):
         file_path = QFileDialog.getSaveFileName(None, "Save As", "", "JSON Files (*.json);;All Files (*)")[0]
         self.save(file_path)
+        #displays file name without .json as window title
+        self.setWindowTitle("D&D Initiative Tracker - " + file_path.rsplit("/", 1)[1].rsplit(".")[0]) 
     
     def open(self):
-        file_path = QFileDialog.getOpenFileName(None, "Open File", "", "JSON Files (*.json);;All Files (*)")[0]
-        self.dict_to_table(self.controller.load_from_file(file_path))
+        try:
+            file_path = QFileDialog.getOpenFileName(None, "Open File", "", "JSON Files (*.json);;All Files (*)")[0]
+            self.dict_to_table(self.controller.load_from_file(file_path), False)
+            #displays file name without .json as window title
+            if file_path: self.setWindowTitle("D&D Initiative Tracker - " + file_path.rsplit("/", 1)[1].rsplit(".")[0])
+            print("Creature list length after open: ", self.controller.get_tracker_creature_list_length())
+        except KeyError:
+            err_msg = Error_Popup(message="Could not open selected file - please open a valid file")
+            err_msg.show_popup()
+            self.open()
+    #-------------------------------------#
+    #---------- Helper Methods -----------#
+    #-------------------------------------#
+
+    @pyqtSlot(int, list)
+    def options_delegate_receiver(self, row_index, conditions):
+            self.is_Program_Cell_Change = False
+            self.dict_to_table(self.controller.delegate_options_call(Constants.Delegate_Options.kConditions_Command_Call, row_index, conditions))
+    
+    def pre_load_rows(self, preload_amt):
+        for i in range(preload_amt):
+            self.add_creature_row()
+        
+    def verify_item_and_display_text(self, item, row, col, string):
+        if item is None:
+            self.table.setItem(row, col, QTableWidgetItem())
+        elif item.text() != string:
+            item.setText(string)
+            
+             
+
 
     
 
@@ -359,6 +422,7 @@ class Initiative_Tracker_GUI(QMainWindow):
         self.controller.save_state()
         self.show()
         self.pre_load_rows(3)
+        self.dict_to_table(self.controller.get_tracker_dict())
         sys.exit(self.app.exec())()
     
     #--------- asset handling ----------#
@@ -370,5 +434,5 @@ class Initiative_Tracker_GUI(QMainWindow):
 
 
     
-#connect buttons to methods in tracker
-#all buttons shoudl adress methods in tracker -> take data from tracker and put to table
+#TODO!!! 1. write full data transfer from delegate to creature. 2. checkboxes should be based off of tracker memory, not delegate memeory 
+# receiving segmentation faults during connect to receiver and sending signals upon delegate closure 

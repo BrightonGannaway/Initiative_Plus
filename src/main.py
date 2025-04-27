@@ -12,4 +12,5 @@ def main():
 if __name__ == "__main__":
     main()
         
-#TODO: make a quick quite command for the terminal version
+#TODO: Be able to save conditions (this means having creature conditions processed)
+#TODO:

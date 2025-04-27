@@ -1,0 +1,29 @@
+{
+    "Creatures": [
+        {
+            "name": "Test",
+            "initiative": null,
+            "hp": null,
+            "ac": null,
+            "res": [],
+            "vul": [],
+            "conditions": [
+                "charmed",
+                "frightened"
+            ]
+        },
+        {
+            "name": "Test",
+            "initiative": null,
+            "hp": null,
+            "ac": null,
+            "res": [],
+            "vul": [],
+            "conditions": [
+                "invisible"
+            ]
+        }
+    ],
+    "Current Round": 1,
+    "Current Turn": 0
+}
