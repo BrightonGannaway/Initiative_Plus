@@ -5,8 +5,11 @@
             "initiative": 20,
             "hp": 49,
             "ac": 14,
-            "res": ["cold"],
             "vul": [],
+            "res": [
+                "cold"
+            ],
+            "imu": [],
             "conditions": []
         },
         {
@@ -14,8 +17,9 @@
             "initiative": 20,
             "hp": 53,
             "ac": 17,
-            "res": [],
             "vul": [],
+            "res": [],
+            "imu": [],
             "conditions": []
         },
         {
@@ -23,8 +27,9 @@
             "initiative": 20,
             "hp": 39,
             "ac": 16,
-            "res": [],
             "vul": [],
+            "res": [],
+            "imu": [],
             "conditions": []
         },
         {
@@ -32,8 +37,11 @@
             "initiative": 20,
             "hp": 68,
             "ac": 17,
-            "res": ["poison"],
             "vul": [],
+            "res": [
+                "poison"
+            ],
+            "imu": [],
             "conditions": []
         },
         {
@@ -41,8 +49,9 @@
             "initiative": 20,
             "hp": 31,
             "ac": 12,
-            "res": [],
             "vul": [],
+            "res": [],
+            "imu": [],
             "conditions": []
         },
         {
@@ -50,11 +59,11 @@
             "initiative": 20,
             "hp": 45,
             "ac": 16,
-            "res": [],
             "vul": [],
+            "res": [],
+            "imu": [],
             "conditions": []
         }
-
     ],
     "Current Round": 1,
     "Current Turn": 0

@@ -3,14 +3,19 @@ from PyQt6.QtWidgets import (
     QSpinBox, QTableWidget, QTableWidgetItem, QFrame, QComboBox, 
     QVBoxLayout )
 
-from PyQt6.QtCore import Qt, QRect, QEvent
+from PyQt6.QtCore import Qt, QRect, QEvent, pyqtSignal, QModelIndex
 from PyQt6.QtGui import QMouseEvent
 from PyQt6.QtWidgets import QApplication
 from constants import Constants
 
 class Damage_Delegate(QStyledItemDelegate):
+
+    emmited_value_damage = pyqtSignal(int, str, int)
+    emmited_value_heal = pyqtSignal(int, int)
+
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.global_index = QModelIndex()
 
     def editorEvent(self, event, model, option, index):
         if event.type() == event.Type.MouseButtonPress:
@@ -19,6 +24,7 @@ class Damage_Delegate(QStyledItemDelegate):
         return super().editorEvent(event, model, option, index)
     
     def show_Popup(self, option, model, index):
+        self.global_index = index
         self.popup = None
 
         if self.popup:
@@ -126,24 +132,33 @@ class Damage_Delegate(QStyledItemDelegate):
 
         #multiuplying by factors of 2 for some reason 
         def apply_damage():
-            print("Damaging: ", get_Current_HP(), "hp by: ", self.spin_box.value())
-            new_hp = (get_Current_HP() - self.spin_box.value())
-            model.setData(index, new_hp, Qt.ItemDataRole.EditRole)
-            print("New HP -d: ", get_Current_HP())
-            self.popup.close()
+            self.emit_damage()
+            # print("Damaging: ", get_Current_HP(), "hp by: ", self.spin_box.value())
+            # new_hp = (get_Current_HP() - self.spin_box.value())
+            # model.setData(index, new_hp, Qt.ItemDataRole.EditRole)
+            # print("New HP -d: ", get_Current_HP())
+            # self.popup.close()
 
         #multiplying by factors of -3 for some reason
         def heal():
-            print("Healing: ", get_Current_HP(), "hp by: ", self.spin_box.value())
-            new_hp = (get_Current_HP() + self.spin_box.value())
-            model.setData(index, new_hp, Qt.ItemDataRole.EditRole)
-            print("New HP -h: ", get_Current_HP())
-            self.popup.close()
-            print("Healed")
+            self.emit_heal()
+            # print("Healing: ", get_Current_HP(), "hp by: ", self.spin_box.value())
+            # new_hp = (get_Current_HP() + self.spin_box.value())
+            # model.setData(index, new_hp, Qt.ItemDataRole.EditRole)
+            # print(index.row())
+            # print("New HP -h: ", get_Current_HP())
+            # self.popup.close()
+            # print("Healed")
 
         self.minus_button.clicked.connect(apply_damage)
         self.plus_button.clicked.connect(heal)
+            
+    def emit_damage(self):
+        print("current damage type: ", self.damage_Type_Box.currentData())
+        self.emmited_value_damage.emit(self.global_index.row(), self.damage_Type_Box.currentText(), self.spin_box.value())
 
+    def emit_heal(self):
+        self.emmited_value_heal.emit(self.global_index.row(), self.spin_box.value())
 
 
 #TODO: 2 bugs -> plus minus don't damage or heal but merely replace. Once spinwheel clicked QFrame thinks focus is still on spinwheel and thus popup doesnt close

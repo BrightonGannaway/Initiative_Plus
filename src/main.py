@@ -12,5 +12,5 @@ def main():
 if __name__ == "__main__":
     main()
         
-#TODO: Be able to save conditions (this means having creature conditions processed)
-#TODO:
+#TODO: Set up resistances and vulnerbailties
+#TODO: D20 logo up top that rolls a d20

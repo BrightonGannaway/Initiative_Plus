@@ -16,6 +16,7 @@ class Constants:
 
         kColumn_AC_Title = "AC"
         kColumn_AC_Type = "int"
+        kColumn_AC_Index = 3
 
         kColumn_Conditions_Title = "Conditions"
         kColumn_Conditions_Type = "string"
@@ -42,6 +43,10 @@ class Constants:
         kDictionary_Creatures_List_hp_Title = "hp"
         kDictionary_Creatures_List_ac_Title = "ac"
         kDictionary_Creatures_List_condtions_Title = "conditions"
+        kDictionary_Creatures_List_vulnerabilties_Title = "vul"
+        kDictionary_Creatures_List_resistances_Title = "res"
+        kDictionary_Creatures_List_immunities_Title = "imu"
+
 
 
     class Button_Constants:
@@ -72,10 +77,11 @@ class Constants:
 
     class Properties:
         KDamage_Types = (
-
-        "acid", "bludgeoning", "cold", "fire", "force", 
-        "lightning", "necrotic", "piercing", "poison", 
-        "psychic", "radiant", "slashing", "thunder"
+        
+        "----",
+        "Acid", "Bludgeoning", "Cold", "Fire", "Force", 
+        "Lightning", "Necrotic", "Piercing", "Poison", 
+        "Psychic", "Radiant", "Slashing", "Thunder"
 
         )
 
@@ -88,11 +94,18 @@ class Constants:
         "unconscious"
 
         )
+
+        kDefenseOptions = (
+            "vulnerable", "resistant", "immune"
+        )
+
+        kVunerability = "vulnerable"
+        kResistance = "resistant"
+        kImmunity = "immune"
     
     class Delegate_Options:
         kConditions_Command_Call = "conditionsCALL"
-        kResistances_Command_Call = "resistanceCALL"
-        kVulnerabilities_Command_Call = "vulnerabiltyCALL"
+        kDefense_Command_Call = "defenseCALL"
 
     class Display_Constants:
         kCondition_HTML_Color_Format_Single_Digit_Dict = {
@@ -111,3 +124,7 @@ class Constants:
             "unconscious" : "<font color='purple'>U</font> "
         }
 
+    class Image_Constants:
+        undo_image_path = "assets/undo_button_IT.png"   
+        redo_image_path = "assets/redo_button_IT.png"
+        shield_image_path = "assets/resistence_shield.png"

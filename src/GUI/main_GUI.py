@@ -4,7 +4,8 @@ import copy
 
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, 
                             QTableWidget, QTableWidgetItem, QTableView, QPushButton, 
-                            QLabel, QMenuBar, QMenu, QFileDialog, QMessageBox, QAbstractItemView)
+                            QLabel, QMenuBar, QMenu, QFileDialog, QMessageBox, QAbstractItemView,
+                            QStyle, QHeaderView)
 from PyQt6.QtGui import QColor, QPixmap, QIcon, QMouseEvent, QFont, QAction, QKeySequence
 from PyQt6.QtCore import Qt, pyqtSignal, pyqtBoundSignal, QModelIndex, pyqtSlot
 
@@ -18,7 +19,7 @@ from GUI.Clickable_Image import Clickable_Image
 from GUI.Popups.Error_Popup import Error_Popup
 
 
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))) 
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 
 class Initiative_Tracker_GUI(QMainWindow):
@@ -44,8 +45,8 @@ class Initiative_Tracker_GUI(QMainWindow):
         self.width = Constants.Table_Constants.kWidth
         self.height = Constants.Table_Constants.kHeight
         self.setGeometry(100, 100, self.width, self.height)
-        self.setMaximumHeight(self.height)
-        self.setMaximumWidth(self.width)
+        # self.setMaximumHeight(self.height)
+        # self.setMaximumWidth(self.width)
 
         #menu bar options
         self.menu = QMenuBar()
@@ -83,11 +84,19 @@ class Initiative_Tracker_GUI(QMainWindow):
                                                 Constants.Table_Constants.kColumn_AC_Title, 
                                                 Constants.Table_Constants.kColumn_Conditions_Title
                                             ])
+        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         
+        #delegates
         self.master_Delegate_Conditions = Cell_Aware_Delegate(self.table)
         self.condition_delegates = {}
-        self.table.setItemDelegateForColumn(Constants.Table_Constants.kColumn_HP_Index, Damage_Delegate(self.table))
         self.table.setItemDelegateForColumn(Constants.Table_Constants.kColumn_Conditions_Index, self.master_Delegate_Conditions)
+        self.master_Delegate_AC = Cell_Aware_Delegate(self.table)
+        self.AC_delegates = {}
+        self.table.setItemDelegateForColumn(Constants.Table_Constants.kColumn_AC_Index, self.master_Delegate_AC)
+        self.damage_delegate = Damage_Delegate(self.table)
+        self.damage_delegate.emmited_value_damage.connect(self.damage_creature_row)
+        self.damage_delegate.emmited_value_heal.connect(self.heal_creature_row)
+        self.table.setItemDelegateForColumn(Constants.Table_Constants.kColumn_HP_Index, self.damage_delegate)
         
         self.table.itemChanged.connect(self.table_updated)
         self.main_layout.addWidget(self.table, stretch=3)
@@ -129,10 +138,8 @@ class Initiative_Tracker_GUI(QMainWindow):
         self.verticle_button_layout.addWidget(self.sort_initiative_button)
 
         #Undo Redo Buttons
-        self.undo_image_path = "assets/undo_button_IT.png"   
-        self.redo_image_path = "assets/redo_button_IT.png"
-        self.pixmap_undo = QPixmap(self.undo_image_path).scaled(self.width // 12, self.height // 12)
-        self.pixmap_redo = QPixmap(self.redo_image_path).scaled(self.width // 12, self.height // 12)
+        self.pixmap_undo = QPixmap(Constants.Image_Constants.undo_image_path).scaled(self.width // 12, self.height // 12)
+        self.pixmap_redo = QPixmap(Constants.Image_Constants.redo_image_path).scaled(self.width // 12, self.height // 12)
         self.undo_button = Clickable_Image()
         self.redo_button = Clickable_Image()
         self.undo_button.setPixmap(self.pixmap_undo)
@@ -214,15 +221,23 @@ class Initiative_Tracker_GUI(QMainWindow):
     #index of creature stored as creature name. Only exclusive to creature spot
     #update tracker parameter used as caution if tracker already has data beyond table data. ex: when loading from a filled file
     def add_creature_row(self, creatures=None, update_tracker=True):
-        op_delegate = Options_Delegate(self.table)
-        op_delegate.emmited_value.connect(self.options_delegate_receiver)
-        self.condition_delegates[(self.table.rowCount(), Constants.Table_Constants.kColumn_Conditions_Index)] = op_delegate
-        self.master_Delegate_Conditions.register_delegate(self.table.rowCount(), Constants.Table_Constants.kColumn_Conditions_Index, op_delegate)
+
+        #create conditions delegate
+        op_delegate_conditions = Options_Delegate(self.table, icon = QStyle.PrimitiveElement.PE_IndicatorSpinPlus, options=Constants.Properties.kConditions, use_html_display=True)
+        op_delegate_conditions.emmited_value.connect(self.options_delegate_receiver)
+        self.condition_delegates[(self.table.rowCount(), Constants.Table_Constants.kColumn_Conditions_Index)] = op_delegate_conditions
+        self.master_Delegate_Conditions.register_delegate(self.table.rowCount(), Constants.Table_Constants.kColumn_Conditions_Index, op_delegate_conditions)
+
+        #create AC delegate
+        op_delegate_AC = Options_Delegate(self.table, icon=QPixmap(Constants.Image_Constants.shield_image_path), options=Constants.Properties.KDamage_Types[1:], sub_options=Constants.Properties.kDefenseOptions)
+        op_delegate_AC.emmited_value_with_sub_options.connect(self.options_delegate_receiver_for_sub_options)
+        self.AC_delegates[(self.table.rowCount(), Constants.Table_Constants.kColumn_AC_Index)] = op_delegate_AC
+        self.master_Delegate_AC.register_delegate(self.table.rowCount(), Constants.Table_Constants.kColumn_AC_Index, op_delegate_AC)
+
         self.table.insertRow(self.table.rowCount())
         print("update tracker: ", update_tracker)
         if update_tracker:
             self.controller.create_Blank_Creature()
-            print("adding blank creature: should be 3")
         #self.max_rows += 1
 
     def remove_selected_row(self):
@@ -232,6 +247,17 @@ class Initiative_Tracker_GUI(QMainWindow):
 
         #make sure to reset backround colors
         self.update_Row_Backround(self.current_turn)
+    
+    @pyqtSlot(int, str, int)
+    def damage_creature_row(self, row_index, dmg_type, dmg):
+        self.is_Program_Cell_Change = False
+        self.dict_to_table(self.controller.damage_Creature(row_index, dmg_type, dmg))
+
+    @pyqtSlot(int, int)
+    def heal_creature_row(self, row_index, hp):
+        self.is_Program_Cell_Change = False
+        self.dict_to_table(self.controller.heal_Creature(row_index, hp))
+
 
     def clear_table(self):
         self.dict_to_table(self.controller.clear_creatures())
@@ -245,13 +271,14 @@ class Initiative_Tracker_GUI(QMainWindow):
 
     def undo(self):
         print("Undo Attempted")
-        self.dict_to_table(self.controller.undo())
+        self.dict_to_table(self.controller.undo(), False)
+        self.get_current_tracker_state()
     
     def redo(self):
         print("redo Attmepted")
-        self.dict_to_table(self.controller.redo())
+        self.dict_to_table(self.controller.redo(), False)
+        self.get_current_tracker_state()
 
-    #see add_creature method for docs on update_tracker
     def dict_to_table(self, dict, update_tracker=True):
 
         #self.load_stylesheet()
@@ -266,6 +293,9 @@ class Initiative_Tracker_GUI(QMainWindow):
         C_hp_key = Constants.Data_Constants.kDictionary_Creatures_List_hp_Title
         C_ac_key = Constants.Data_Constants.kDictionary_Creatures_List_ac_Title
         C_condtions_key = Constants.Data_Constants.kDictionary_Creatures_List_condtions_Title
+        C_vul_key = Constants.Data_Constants.kDictionary_Creatures_List_vulnerabilties_Title
+        C_res_key = Constants.Data_Constants.kDictionary_Creatures_List_resistances_Title
+        C_imu_key = Constants.Data_Constants.kDictionary_Creatures_List_immunities_Title
 
         row_count = self.table.rowCount()
         dict_row_count = len(dict[C_list_name])
@@ -301,13 +331,27 @@ class Initiative_Tracker_GUI(QMainWindow):
 
             #handle option delegates
             con_delegate = self.condition_delegates.get((row, Constants.Table_Constants.kColumn_Conditions_Index))
-            con_delegate.set_saved_conditions(creature[C_condtions_key])
+            con_delegate.set_saved_options(creature[C_condtions_key])
 
             conditions_display_sring = ""
             for c in creature[C_condtions_key]:
                 if c in Constants.Properties.kConditions:
                     conditions_display_sring = conditions_display_sring + Constants.Display_Constants.kCondition_HTML_Color_Format_Single_Digit_Dict[c]
             
+            #apply all defensive proporties(vul, res, imu) first get ac delegate
+            ac_delegate = self.AC_delegates.get((row, Constants.Table_Constants.kColumn_AC_Index))
+            defenses_dict = {}
+            vul_list, res_list, imu_list = creature["vul"], creature["res"], creature["imu"]
+            
+            for vul in vul_list:
+                defenses_dict[vul] = Constants.Properties.kVunerability
+            for res in res_list:
+                defenses_dict[res] = Constants.Properties.kResistance
+            for imu in imu_list:
+                defenses_dict[imu] = Constants.Properties.kImmunity
+            
+            ac_delegate.set_saved_options(sub_options=defenses_dict)
+
             #self.verify_item_and_display_text(item, row, Constants.Table_Constants.kColumn_Conditions_Index, conditions_display_sring)
             item = self.table.item(row, Constants.Table_Constants.kColumn_Conditions_Index)
             if item is None:
@@ -386,6 +430,8 @@ class Initiative_Tracker_GUI(QMainWindow):
             #displays file name without .json as window title
             if file_path: self.setWindowTitle("D&D Initiative Tracker - " + file_path.rsplit("/", 1)[1].rsplit(".")[0])
             print("Creature list length after open: ", self.controller.get_tracker_creature_list_length())
+            #make sure everything is displayed
+            self.dict_to_table(self.controller.get_tracker_dict())
         except KeyError:
             err_msg = Error_Popup(message="Could not open selected file - please open a valid file")
             err_msg.show_popup()
@@ -396,8 +442,15 @@ class Initiative_Tracker_GUI(QMainWindow):
 
     @pyqtSlot(int, list)
     def options_delegate_receiver(self, row_index, conditions):
-            self.is_Program_Cell_Change = False
-            self.dict_to_table(self.controller.delegate_options_call(Constants.Delegate_Options.kConditions_Command_Call, row_index, conditions))
+        self.is_Program_Cell_Change = False
+        self.dict_to_table(self.controller.delegate_options_call(Constants.Delegate_Options.kConditions_Command_Call, row_index, conditions))
+
+    @pyqtSlot(int, dict)
+    def options_delegate_receiver_for_sub_options(self, row_index, defenses_dict):
+        self.is_Program_Cell_Change = False
+        self.dict_to_table(self.controller.delegate_options_call(Constants.Delegate_Options.kDefense_Command_Call, row_index, defenses_dict))
+
+    
     
     def pre_load_rows(self, preload_amt):
         for i in range(preload_amt):
@@ -408,6 +461,9 @@ class Initiative_Tracker_GUI(QMainWindow):
             self.table.setItem(row, col, QTableWidgetItem())
         elif item.text() != string:
             item.setText(string)
+    
+    def get_current_tracker_state(self):
+        self.dict_to_table(self.controller.get_tracker_dict())
             
              
 
@@ -434,5 +490,3 @@ class Initiative_Tracker_GUI(QMainWindow):
 
 
     
-#TODO!!! 1. write full data transfer from delegate to creature. 2. checkboxes should be based off of tracker memory, not delegate memeory 
-# receiving segmentation faults during connect to receiver and sending signals upon delegate closure 

@@ -1,21 +1,31 @@
-from PyQt6.QtWidgets import QStyledItemDelegate, QFrame, QVBoxLayout, QCheckBox, QStyle, QStyleOptionButton, QDialog
-from PyQt6.QtCore import Qt, QRect, pyqtSignal, pyqtBoundSignal, QSizeF
-from PyQt6.QtGui import QTextDocument, QAbstractTextDocumentLayout
+from PyQt6.QtWidgets import (QStyledItemDelegate, QFrame, QVBoxLayout, QCheckBox, 
+                             QStyle, QStyleOptionButton, QDialog,
+                            QRadioButton, QButtonGroup, QHBoxLayout, QGroupBox, QScrollArea,
+                            QWidget)
+from PyQt6.QtCore import Qt, QRect, pyqtSignal, pyqtBoundSignal, QSizeF, QEvent
+from PyQt6.QtGui import QTextDocument, QAbstractTextDocumentLayout, QPixmap
 from constants import Constants
 from controller import Controller
 
 class Options_Delegate(QStyledItemDelegate):
 
     emmited_value = pyqtSignal(int, list)
+    emmited_value_with_sub_options = pyqtSignal(int, dict)
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, icon=None, options=None, use_html_display=False, sub_options=None):
         super().__init__(parent)
         self.arrow_width = 16
         self.global_index = 0
         self.arrow_Button = QStyleOptionButton()
         self.controller = Controller()
-        self.checkboxes = []
-        self.saved_conditions = [] 
+        self.options_checked = []
+        self.icon = icon 
+        self.options = options or []
+        self.saved_options = []
+        self.sub_options = sub_options or []
+        self.sub_options_checked = {}
+        self.saved_sub_options = {}
+        self.use_html_display = use_html_display
     
 
     
@@ -31,18 +41,22 @@ class Options_Delegate(QStyledItemDelegate):
         self.arrow_Button = QStyleOptionButton()
         self.arrow_Button.rect = arrow_rect
         self.arrow_Button.state = QStyle.StateFlag.State_Enabled
-        option.widget.style().drawPrimitive(QStyle.PrimitiveElement.PE_IndicatorSpinPlus, self.arrow_Button, painter)
+        
+        if isinstance(self.icon, QPixmap):
+            option.widget.style().drawItemPixmap(painter, arrow_rect, Qt.AlignmentFlag.AlignCenter, self.icon.scaled(self.arrow_width, self.arrow_width))
+            return
+        option.widget.style().drawPrimitive(self.icon or QStyle.PrimitiveElement.PE_IndicatorSpinPlus , self.arrow_Button, painter)
 
-        painter.save()
-        document = QTextDocument()
-        document.setHtml(index.data(Qt.ItemDataRole.UserRole))
-        document.setDefaultFont(Constants.Fonts.kCell_Display)
-        document.setPageSize(QSizeF(option.rect.size()))
-        context = QAbstractTextDocumentLayout.PaintContext()
-        painter.translate(option.rect.x(), option.rect.y())
-        document.documentLayout().draw(painter, context)
-        painter.restore()
-
+        if self.use_html_display:
+            painter.save()
+            document = QTextDocument()
+            document.setHtml(index.data(Qt.ItemDataRole.UserRole))
+            document.setDefaultFont(Constants.Fonts.kCell_Display)
+            document.setPageSize(QSizeF(option.rect.size()))
+            context = QAbstractTextDocumentLayout.PaintContext()
+            painter.translate(option.rect.x(), option.rect.y())
+            document.documentLayout().draw(painter, context)
+            painter.restore()
 
 
 
@@ -57,58 +71,124 @@ class Options_Delegate(QStyledItemDelegate):
             return True
         return super().editorEvent(event, model, option, index)
     
+
+    def eventFilter(self, object, event):
+        if object == self.options_Scroll_Area:
+            if event.type() == QEvent.Type.WindowDeactivate:
+                 self.close_Popup()
+                 self.popup = None
+        return super().eventFilter(object, event)
+    
+    
     def show_Popup(self, option, model, index):
-        self.checkboxes.clear()
+        self.options_checked.clear()
+
         self.popup = None
         if self.popup:
             self.popup.close()
+
+        self.options_Scroll_Area = None
+        if self.options_Scroll_Area:
+                self.options_Scroll_Area.close()
         
-        self.popup = QFrame(option.widget.parent())
-        self.popup.setWindowFlags(Qt.WindowType.Popup)
+        self.popup = QFrame(option.widget.parent()) 
+        self.popup.setWindowFlags(Qt.WindowType.Popup) 
         self.popup.setFrameStyle(QFrame.Shape.Panel | QFrame.Shadow.Raised)
-        layout = QVBoxLayout(self.popup)
+        layout = QVBoxLayout(self.popup) 
+
+        self.scroll_Area = QScrollArea(option.widget.parent())
+        self.scroll_Area.setWidget(self.popup)
+        self.scroll_Area.setWidgetResizable(True)
+        
 
         #popup positioning below cell
         rect = option.widget.visualRect(index)
         global_pos = option.widget.mapToGlobal(rect.bottomRight())
-        popup_x = global_pos.x()
-        popup_y = global_pos.y()
+
         popup_width = 150
-        popup_height = len(Constants.Properties.kConditions) * 25
-        self.popup.setGeometry(popup_x, popup_y, popup_width, popup_height)
-        self.popup.move(popup_x - popup_width, popup_y)
-        
-        self.saved_conditions = [s.strip() for s in self.saved_conditions] if self.saved_conditions else []
-        
-        
-        for condition in Constants.Properties.kConditions:
-            checkbox = QCheckBox(condition)
-            checkbox.setChecked(condition.strip().lower() in [s.lower() for s in self.saved_conditions])
-            layout.addWidget(checkbox)
-            self.checkboxes.append(checkbox)
+        popup_height = len(self.options) * 25
 
+        # Position popup just under the cell, aligned to right edge
+        # popup_x = global_pos.x() 
+        # popup_y = global_pos.y()
+        popup_x = rect.bottomRight().x()
+        popup_y = rect.bottomRight().y()
+
+        # self.popup.setGeometry(popup_x, popup_y, popup_width, popup_height) -OP
+        # self.popup.move(popup_x - popup_width, popup_y) -OP
+        self.scroll_Area.setGeometry(popup_x, popup_y, popup_width * 3 if self.sub_options else popup_width, popup_height)
+        self.scroll_Area.move(popup_x - popup_width, popup_y)
+        
+        self.saved_options = [s.strip() for s in self.saved_options] if self.saved_options else []
+        
+        
+        for option in self.options:
+            if len(self.sub_options) <= 1:
+                checkbox = QRadioButton(option)
+                checkbox.setAutoExclusive(False)
+                checkbox.setChecked(option.strip().lower() in [s.lower() for s in self.saved_options])
+                self.options_checked.append(checkbox)
+                layout.addWidget(checkbox) 
+            else:
+                box_group = QGroupBox(option)
+                button_Group = QButtonGroup()
+                button_layout = QHBoxLayout()
+                button_list = []
+                for sub_option in self.sub_options:
+                    sub_checkbox = QRadioButton(sub_option)
+                    sub_checkbox.setChecked(option in self.saved_sub_options.keys() and self.saved_sub_options[option] == sub_option)
+                    button_Group.addButton(sub_checkbox)
+                    button_layout.addWidget(sub_checkbox)
+                    button_list.append(sub_checkbox)
+                self.sub_options_checked[option] = button_list
+                box_group.setLayout(button_layout)
+                layout.addWidget(box_group)
+        
+            
+
+
+        # self.popup.focusOutEvent = self.close_Popup -OP
+
+        self.popup.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
         self.popup.setFocus()
-        self.popup.show()
+        self.scroll_Area.show()
 
+        #fixed an issue where 
         self.popup.focusOutEvent = self.close_Popup
 
-    def emit_conditions(self):
-        self.emmited_value.emit(self.global_index.row(), self.saved_conditions)
+    def emit_selection(self):
+        self.emmited_value.emit(self.global_index.row(), self.saved_options)
     
-    def set_saved_conditions(self, conditions):
-        self.saved_conditions = conditions
+    def emit_selections_with_sub_options(self):
+        self.emmited_value_with_sub_options.emit(self.global_index.row(), self.saved_sub_options)
+
+    def set_saved_options(self, options=[], sub_options={}):
+        self.saved_options = options
+        self.saved_sub_options = sub_options
 
     #saves options and closes
     def close_Popup(self, event):
-        self.saved_conditions.clear()
-        self.saved_conditions = [cb.text() for cb in self.checkboxes if cb.isChecked()]
+        self.saved_options.clear()
+        self.saved_options = [option.text() for option in self.options_checked if option.isChecked()]
+       
+        #create saved dictionary for sub items
+        self.saved_sub_options.clear()
+        for option, sub_options in self.sub_options_checked.items():
+            for sub_op in sub_options:
+                if sub_op.isChecked():
+                    self.saved_sub_options[option] = sub_op.text()
+                    break
+
+        print(self.saved_sub_options)
         #self.parent().model().setData(self.current_index, ", ".join(self.saved_conditions), Qt.ItemDataRole.EditRole)
         #self.controller.delegate_options_call(Constants.Delegate_Options.kConditions_Command_Call, self.global_index.row(), self.saved_conditions)
-        self.emit_conditions()
+        self.emit_selection()
+        self.emit_selections_with_sub_options()
         self.popup.close()
+        self.scroll_Area.close()
 
     def get_selected(self):
-        return self.saved_conditions
+        return self.saved_options
 
 
         
