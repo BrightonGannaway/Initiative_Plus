@@ -64,12 +64,9 @@ class InititativeTracker:
             creature.print_creature()
 
     #to manage individual changes to creatures 
-    def manage_creature(self, index_r, value_Type, value):
+    def manage_creature(self, index, value_Type, value):
 
-        print("\nCreature length = ", len(self.creatures))
-        print("Searching index: ", index_r)
-        print("Using tracker: ", self)
-        creature = self.creatures[index_r]
+        creature = self.creatures[index]
 
         match value_Type:
             case Constants.Table_Constants.kColumn_Name_Title:
@@ -82,6 +79,8 @@ class InititativeTracker:
                 creature.set_ac(value)
             case Constants.Table_Constants.kColumn_Conditions_Title:
                 creature.set_conditions(value)
+            case Constants.Delegate_Options.kDefense_Command_Call:
+                creature.set_defenses(value)
 
     def clear_creatures_contents(self):
         length_saved = len(self.creatures)
@@ -101,31 +100,11 @@ class InititativeTracker:
         else:
             return False
 
-    def apply_damage(self, index, dmg):
-        self.creatures[index].damage(dmg)
+    def apply_damage(self, index, dmg_type, dmg):
+        self.creatures[index].damage(dmg_type, dmg)
 
-
-    
-    def manage_conditions(self):
-        
-        target = self.search_creature()
-        
-        if not target:
-            return
-        
-        condition_action = input("Add or Remove conditions: ")
-        condition = input("Condition: ")
-
-        if condition not in target.CONDITIONS:
-            print(f"{condition} is an invalid condition")
-            return
-
-        if condition_action.lower() == "add":
-            target.add_condition(condition.lower())
-        elif condition_action.lower() == "remove":
-            target.remove_condition(condition.lower())
-        else:
-            print("Invalid action please try again")
+    def heal(self, index, hp):
+        self.creatures[index].heal(hp)
 
     def manage_initiatives(self):
         for creature in self.creatures:

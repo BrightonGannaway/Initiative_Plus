@@ -34,9 +34,17 @@ class Controller:
         return cls.get_tracker_dict()
     
     @classmethod   
-    def damage_Creature(cls, row, dmg):
+    def damage_Creature(cls, index, dmg_type, dmg):
+
         cls.save_state()
-        cls.tracker.apply_damage(row, dmg)
+        cls.tracker.apply_damage(index, dmg_type, dmg)
+        return cls.get_tracker_dict()
+
+    @classmethod
+    def heal_Creature(cls, index, hp):
+        cls.save_state()
+        cls.tracker.heal(index, hp)
+        return cls.get_tracker_dict()
 
     @classmethod
     def next_turn(cls):
@@ -69,12 +77,24 @@ class Controller:
         cls.save_state()
         cls.tracker.add_creature()
 
+    @classmethod    #delegate calls - allows a backdoor for GUI delegates to manipulate cls.tracker data
+    def delegate_options_call(cls, call, index, value):
+        cls.save_state
+        match call:
+            case Constants.Delegate_Options.kConditions_Command_Call:
+                cls.tracker.manage_creature(index, Constants.Table_Constants.kColumn_Conditions_Title, value)
+                return cls.get_tracker_dict()
+            case Constants.Delegate_Options.kDefense_Command_Call:
+                cls.tracker.manage_creature(index, Constants.Delegate_Options.kDefense_Command_Call, value)
+                return cls.get_tracker_dict()
+            
     @classmethod
     def save_to_file(cls, file_path):
         cls.tracker.save_to_file(file_path)
 
     @classmethod    
     def load_from_file(cls, file_path="initiative_data.json"):
+        cls.save_state()
         cls.tracker.load_from_file(file_path)
         return cls.get_tracker_dict()
     
@@ -87,10 +107,5 @@ class Controller:
     def get_tracker_creature_list_length(cls):
         return len(cls.tracker.creatures)
     
-    @classmethod    #delegate calls - allows a backdoor for GUI delegates to manipulate cls.tracker data
-    def delegate_options_call(cls, call, index, value):
-        match call:
-            case Constants.Delegate_Options.kConditions_Command_Call:
-                cls.tracker.manage_creature(index, Constants.Table_Constants.kColumn_Conditions_Title, value)
-                return cls.get_tracker_dict()
+    
 

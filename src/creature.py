@@ -1,6 +1,7 @@
 #Creature class creates a creature along with 
 from rich.text import Text
 from rich.style import Style
+from constants import Constants
 
 class Creature:
 
@@ -17,34 +18,39 @@ class Creature:
     }
     
 
-    def __init__(self, name=None, initiative=None, hp=None, ac=None, res=None, vul=None, conditions=None, condition_text=None):
+    def __init__(self, name=None, initiative=None, hp=None, ac=None, res=None, vul=None, imu=None, conditions=None, condition_text=None):
         self.name = name
         self.initiative = initiative
         self.hp = hp
         self.ac = ac
-        self.res = res or []
         self.vul = vul or []
+        self.res = res or []
+        self.imu = imu or []
         self.conditions = conditions or []
 
 
 
-    def damage(self, dmg, dmg_type=None):
-        if dmg_type not in self.DAMAGE_TYPES:
-            dmg_type = None #makes invalid damage types none so only valids can be used
-        if dmg_type not in self.DAMAGE_TYPES:
-            dmg_type = None #makes invalid damage types none so only valids can be used
+    def damage(self, dmg_type, dmg):
+        if self.hp is None:
+            self.hp = 0
+
+        if dmg_type not in Constants.Properties.KDamage_Types: dmg_type = None
 
         if dmg_type in self.res:
             dmg = dmg // 2
+        
         elif dmg_type in self.vul:
-            dmg *= 2
+            dmg = dmg * 2
+        
+        elif dmg_type in self.imu:
+            dmg = 0
 
         self.hp -= dmg
-        return dmg
     
     def heal(self, heal_amt):
+        if self.hp is None:
+            self.hp = 0
         self.hp += heal_amt
-        return heal_amt
     
     def set_name(self, name):
         self.name = name
@@ -60,6 +66,21 @@ class Creature:
     
     def set_conditions(self, con):
         self.conditions = con
+
+    def clear_defenses(self):
+        self.vul.clear()
+        self.res.clear()
+        self.imu.clear()
+
+    def set_defenses(self, defenses_dict):
+        for dmg_type, defense_type in defenses_dict.items():
+            match defense_type:
+                case Constants.Properties.kVunerability:
+                    self.vul.append(dmg_type)
+                case Constants.Properties.kResistance:
+                    self.res.append(dmg_type)
+                case Constants.Properties.kImmunity:
+                    self.imu.append(dmg_type)
     
     def add_condition(self, condition_type):
         if condition_type.lower() in self.CONDITIONS and condition_type.lower() not in self.conditions:
