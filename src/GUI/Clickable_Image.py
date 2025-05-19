@@ -14,7 +14,6 @@ class Clickable_Image(QLabel):
         self.pixmap_object = pixmap
         if width and height:
             self.setFixedSize(width, height)
-        print("added pixmap")
 
     def mousePressEvent(self, event: QMouseEvent):
         if self.connected_method:

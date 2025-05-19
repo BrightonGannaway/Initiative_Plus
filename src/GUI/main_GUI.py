@@ -7,7 +7,7 @@ from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, QH
                             QLabel, QMenuBar, QMenu, QFileDialog, QMessageBox, QAbstractItemView,
                             QStyle, QHeaderView)
 from PyQt6.QtGui import QColor, QPixmap, QIcon, QMouseEvent, QFont, QAction, QKeySequence
-from PyQt6.QtCore import Qt, pyqtSignal, pyqtBoundSignal, QModelIndex, pyqtSlot
+from PyQt6.QtCore import Qt, pyqtSignal, pyqtBoundSignal, QModelIndex, QSize, pyqtSlot
 
 
 from controller import Controller
@@ -152,7 +152,7 @@ class Initiative_Tracker_GUI(QMainWindow):
         self.verticle_button_layout.addLayout(self.horizontal_button_layout)
         #add spacer to push buttons to top
         self.verticle_button_layout.addStretch()
-        self.main_layout.addLayout(self.verticle_button_layout, stretch=1)
+        self.main_layout.addLayout(self.verticle_button_layout)
 
         #display turn and round
         self.round_display = QLabel()
@@ -204,7 +204,6 @@ class Initiative_Tracker_GUI(QMainWindow):
     #tommorow update the validate integer method to return 0 if input is not an integer 
     def table_updated(self, item):
         if not self.is_Program_Cell_Change:
-            print("\n\n==Current Matrix==\n\n", self.creature_Matrix, "\n\n\n")
             self.is_Program_Cell_Change = True
 
             header = self.table.horizontalHeaderItem(item.column()).text()
@@ -235,7 +234,6 @@ class Initiative_Tracker_GUI(QMainWindow):
         self.master_Delegate_AC.register_delegate(self.table.rowCount(), Constants.Table_Constants.kColumn_AC_Index, op_delegate_AC)
 
         self.table.insertRow(self.table.rowCount())
-        print("update tracker: ", update_tracker)
         if update_tracker:
             self.controller.create_Blank_Creature()
         #self.max_rows += 1
@@ -270,12 +268,10 @@ class Initiative_Tracker_GUI(QMainWindow):
         self.dict_to_table(self.controller.sort_initiative())
 
     def undo(self):
-        print("Undo Attempted")
         self.dict_to_table(self.controller.undo(), False)
         self.get_current_tracker_state()
     
     def redo(self):
-        print("redo Attmepted")
         self.dict_to_table(self.controller.redo(), False)
         self.get_current_tracker_state()
 
@@ -303,7 +299,6 @@ class Initiative_Tracker_GUI(QMainWindow):
         #add and delete rows only when necessary
         if (dict_row_count > row_count):
             for r in range(dict_row_count - row_count):
-                print("update tracker: ", update_tracker)
                 self.add_creature_row(update_tracker=update_tracker)
                 #self.table.insertRow(self.table.rowCount())
         elif (row_count > dict_row_count):
@@ -326,7 +321,6 @@ class Initiative_Tracker_GUI(QMainWindow):
                     updated_value = str(creature_attribute) if creature_attribute is not None else ""
                 
 
-                #print(f"updating row: {row}, col: {col} with value {updated_value}\n")
                 self.verify_item_and_display_text(item, row, col, updated_value)
 
             #handle option delegates
@@ -380,9 +374,7 @@ class Initiative_Tracker_GUI(QMainWindow):
         qss_path = os.path.join(script_dir, "styles.css")
         try:
             with open(qss_path, "r") as file:
-                print(f"qss filepath -> {qss_path}")
                 self.setStyleSheet(file.read())
-                print("Styling applied")
         except FileNotFoundError:
             print(f"Error: {qss_path} not found.")
 
@@ -429,7 +421,6 @@ class Initiative_Tracker_GUI(QMainWindow):
             self.dict_to_table(self.controller.load_from_file(file_path), False)
             #displays file name without .json as window title
             if file_path: self.setWindowTitle("D&D Initiative Tracker - " + file_path.rsplit("/", 1)[1].rsplit(".")[0])
-            print("Creature list length after open: ", self.controller.get_tracker_creature_list_length())
             #make sure everything is displayed
             self.dict_to_table(self.controller.get_tracker_dict())
         except KeyError:

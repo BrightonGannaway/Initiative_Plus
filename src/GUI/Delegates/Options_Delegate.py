@@ -150,6 +150,9 @@ class Options_Delegate(QStyledItemDelegate):
         # self.popup.focusOutEvent = self.close_Popup -OP
 
         self.popup.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
+        self.scroll_Area.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
+        self.scroll_Area.viewport().setFocusPolicy(Qt.FocusPolicy.StrongFocus)
+        self.scroll_Area.setFocus()
         self.popup.setFocus()
         self.scroll_Area.show()
 
@@ -168,6 +171,8 @@ class Options_Delegate(QStyledItemDelegate):
 
     #saves options and closes
     def close_Popup(self, event):
+        if self.scroll_Area.hasFocus():
+            return
         self.saved_options.clear()
         self.saved_options = [option.text() for option in self.options_checked if option.isChecked()]
        
@@ -179,9 +184,6 @@ class Options_Delegate(QStyledItemDelegate):
                     self.saved_sub_options[option] = sub_op.text()
                     break
 
-        print(self.saved_sub_options)
-        #self.parent().model().setData(self.current_index, ", ".join(self.saved_conditions), Qt.ItemDataRole.EditRole)
-        #self.controller.delegate_options_call(Constants.Delegate_Options.kConditions_Command_Call, self.global_index.row(), self.saved_conditions)
         self.emit_selection()
         self.emit_selections_with_sub_options()
         self.popup.close()

@@ -79,7 +79,7 @@ class Controller:
 
     @classmethod    #delegate calls - allows a backdoor for GUI delegates to manipulate cls.tracker data
     def delegate_options_call(cls, call, index, value):
-        cls.save_state
+        cls.save_state()
         match call:
             case Constants.Delegate_Options.kConditions_Command_Call:
                 cls.tracker.manage_creature(index, Constants.Table_Constants.kColumn_Conditions_Title, value)
@@ -100,7 +100,6 @@ class Controller:
     
     @classmethod
     def get_tracker_dict(cls):
-        print("GUI accessed tracker dict")
         return cls.tracker.to_dict()
     
     @classmethod
