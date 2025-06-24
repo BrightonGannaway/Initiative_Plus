@@ -1,6 +1,5 @@
 #Author: Brighton Gannaway
 
-#Author: Brighton Gannaway
 
 import sys
 import os
@@ -13,7 +12,7 @@ from creature import Creature
 from constants import Constants
 import json
 
-class InititativeTracker:
+class InitiativeTracker:
     def __init__(self):
         self.creatures = []
         self.round = 1
@@ -30,7 +29,7 @@ class InititativeTracker:
     def sort_initiative(self):
         
         UnNoneInt = lambda c : c if c is not None else 0
-        unNoneStr = lambda c : c if c is not None else "~~~~~~~~~~~~~~~~~~~~~~~~" #want to keep null vlaues below all
+        unNoneStr = lambda c : c if c is not None else "~~~~~~~~~~~~~~~~~~~~~~~~" #want to keep null values below all
 
         self.creatures.sort(key=lambda c : UnNoneInt(c.initiative), reverse=True)
         
@@ -50,18 +49,6 @@ class InititativeTracker:
 
     def add_creature(self, name=None, initiative=None, hp=None, ac=None):
         self.creatures.append(Creature(name, initiative, hp, ac))
-        
-    #initiative must be defualt 0 in order rot sort creatures 
-    #TODO: have orde rbe able to be overwridden
-    def manage_creature(self, index_r, name=None, initiative=0, hp=None, ac=None):
-        #removes copy of creature if it exists, note this doesnt currently work.
-        #perhaps add an identifier or make dynamic placement an attribute of that creature 
-        #Or have None creatures that have only thte placement value filled <- do this
-        self.creatures[index_r] = Creature(name, initiative, hp, ac)
-        self.sort_initiative()
-        
-        for creature in self.creatures:
-            creature.print_creature()
 
     #to manage individual changes to creatures 
     def manage_creature(self, index, value_Type, value):
@@ -82,6 +69,27 @@ class InititativeTracker:
             case Constants.Delegate_Options.kDefense_Command_Call:
                 creature.set_defenses(value)
 
+    def move_creature(self, start_pos, end_pos):
+
+        if start_pos == end_pos:
+            return
+        
+        target_creature = self.creatures[start_pos]
+
+        if end_pos > start_pos:
+            i = start_pos
+            while i < end_pos:
+                self.creatures[i] = self.creatures[i + 1]
+                i = i + 1
+            self.creatures[end_pos] = target_creature
+
+        if end_pos < start_pos:
+            i = start_pos
+            while i > end_pos:
+                self.creatures[i] = self.creatures[i - 1]
+                i = i - 1
+            self.creatures[end_pos] = target_creature
+
     def clear_creatures_contents(self):
         length_saved = len(self.creatures)
         self.creatures.clear()
@@ -89,8 +97,11 @@ class InititativeTracker:
             self.add_creature()
 
 
-    def remove_creature(self, index):
-        self.creatures.pop(index)
+    def remove_creature(self, index, end_index=-1):
+        if end_index == -1:
+            end_index = index + 1
+        del self.creatures[index: end_index]
+    
     
     def search_creature(self, index):
         if index.isinstance(int):
@@ -105,14 +116,6 @@ class InititativeTracker:
 
     def heal(self, index, hp):
         self.creatures[index].heal(hp)
-
-    def manage_initiatives(self):
-        for creature in self.creatures:
-            initiative = input(f"Initiative of {creature.name}: ").strip()
-            while not initiative.isnumeric():
-                initiative = input(f"Initaitive must be a number, Initiative of {creature.name}: ")
-            creature.initiative = int(initiative)    
-        self.sort_initiative()
 
     def next_turn(self):
         #prevents crash if moving turn on empty table
@@ -151,16 +154,15 @@ class InititativeTracker:
         self.round = dict["Current Round"]
         self.turn_index = dict["Current Turn"]
 
-#----------------- JSON HANDELING -----------------------------------------------#
+#----------------- JSON HANDLING -----------------------------------------------#
 
-#----------------- JSON HANDELING -----------------------------------------------#
+#----------------- JSON HANDLING -----------------------------------------------#
         
-    #Saves current state of intiative tracker to file (JSON)
+    #Saves current state of initiative tracker to file (JSON)
     def save_to_file(self, filename="initiative_data.json"):
-        print("saving data to json file")
         with open(filename, "w") as file:
             json.dump(self.to_dict(), file, indent=4)
-            print(f"Initiative Data saved to {filename}\nCurrent Round: {self.round}\nNumber of Creatures: {len(self.creatures)}\n\n")
+        
 
     #Loads data from JSON and populates tracker
     def load_from_file(self, filename="initiative_data.json"):
@@ -168,16 +170,15 @@ class InititativeTracker:
             with open(filename, "r") as file:
                 data = json.load(file)
                 self.from_dict(data)
-            print(f"Initiative Data loaded from {filename}\nCurrent Round: {self.round}\nNumber of Creatures: {len(self.creatures)}\n\n")
         except FileNotFoundError:
             print(f"Error {filename} not found")
         except json.JSONDecodeError:
             print(f"Error {filename} has invalid JSON")
 
-#----------------- HISTORY HANDELING ------------------------------------------#
+#----------------- HISTORY HANDLING ------------------------------------------#
 
 
-#----------------- HISTORY HANDELING ------------------------------------------#
+#----------------- HISTORY HANDLING ------------------------------------------#
 
     def save_state(self):
         self.history.save_state(self.to_dict())
@@ -185,14 +186,9 @@ class InititativeTracker:
     def undo(self):
         new_dict = self.history.undo(self.to_dict())
         self.from_dict(new_dict)
-        print(f"Tracker Updated: {self.creatures}, {self.round}, {self.turn_index}")
 
     def redo(self):
         self.from_dict(self.history.redo(self.to_dict()))
-
-    """def display_history(self):
-        print(f"History: {self.history.undo_Stack}")
-    """
 
     def get_history_items(self):
         return self.history.get_history_length()

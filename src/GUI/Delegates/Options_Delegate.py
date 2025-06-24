@@ -1,18 +1,18 @@
 from PyQt6.QtWidgets import (QStyledItemDelegate, QFrame, QVBoxLayout, QCheckBox, 
                              QStyle, QStyleOptionButton, QDialog,
                             QRadioButton, QButtonGroup, QHBoxLayout, QGroupBox, QScrollArea,
-                            QWidget)
-from PyQt6.QtCore import Qt, QRect, pyqtSignal, pyqtBoundSignal, QSizeF, QEvent
+                            QWidget, QPushButton)
+from PyQt6.QtCore import Qt, QRect, pyqtSignal, pyqtBoundSignal, QSizeF, QEvent, pyqtSlot
 from PyQt6.QtGui import QTextDocument, QAbstractTextDocumentLayout, QPixmap
 from constants import Constants
 from controller import Controller
 
 class Options_Delegate(QStyledItemDelegate):
 
-    emmited_value = pyqtSignal(int, list)
-    emmited_value_with_sub_options = pyqtSignal(int, dict)
+    emitted_value = pyqtSignal(int, list)
+    emitted_value_with_sub_options = pyqtSignal(int, dict)
 
-    def __init__(self, parent=None, icon=None, options=None, use_html_display=False, sub_options=None):
+    def __init__(self, parent=None, icon=None, options=None, use_html_display=False, sub_options=None, option_tooltips=None):
         super().__init__(parent)
         self.arrow_width = 16
         self.global_index = 0
@@ -25,6 +25,8 @@ class Options_Delegate(QStyledItemDelegate):
         self.sub_options = sub_options or []
         self.sub_options_checked = {}
         self.saved_sub_options = {}
+        self.button_group_dict = {}
+        self.option_tooltips = option_tooltips or {}
         self.use_html_display = use_html_display
     
 
@@ -126,48 +128,76 @@ class Options_Delegate(QStyledItemDelegate):
             if len(self.sub_options) <= 1:
                 checkbox = QRadioButton(option)
                 checkbox.setAutoExclusive(False)
+                if (self.option_tooltips):
+                    checkbox.setToolTip(self.option_tooltips[option])
                 checkbox.setChecked(option.strip().lower() in [s.lower() for s in self.saved_options])
                 self.options_checked.append(checkbox)
                 layout.addWidget(checkbox) 
             else:
                 box_group = QGroupBox(option)
                 button_Group = QButtonGroup()
+                button_Group.setExclusive(False)
                 button_layout = QHBoxLayout()
                 button_list = []
                 for sub_option in self.sub_options:
                     sub_checkbox = QRadioButton(sub_option)
+                    sub_checkbox.setAutoExclusive(True)
                     sub_checkbox.setChecked(option in self.saved_sub_options.keys() and self.saved_sub_options[option] == sub_option)
                     button_Group.addButton(sub_checkbox)
+                    self.button_group_dict[sub_checkbox] = button_Group
+                    sub_checkbox.toggled.connect(self.uncheck_excluded_buttons)
                     button_layout.addWidget(sub_checkbox)
                     button_list.append(sub_checkbox)
                 self.sub_options_checked[option] = button_list
                 box_group.setLayout(button_layout)
                 layout.addWidget(box_group)
         
-            
-
+        
 
         # self.popup.focusOutEvent = self.close_Popup -OP
 
         self.popup.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
+        self.scroll_Area.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
+        self.scroll_Area.viewport().setFocusPolicy(Qt.FocusPolicy.StrongFocus)
+        self.scroll_Area.setFocus()
         self.popup.setFocus()
         self.scroll_Area.show()
 
         #fixed an issue where 
         self.popup.focusOutEvent = self.close_Popup
+    
+    @pyqtSlot(bool)
+    def uncheck_excluded_buttons(self, toggled_state:bool):
+        button_target = self.sender()
+
+        if isinstance(button_target, QRadioButton):
+            button_Group = self.button_group_dict.get(button_target)
+            for button in button_Group.buttons():
+                if button.isChecked() and button is not button_target:
+                    button.setChecked(False)
+        
+            if toggled_state: button_target.setChecked(True) 
+            
+            
+
 
     def emit_selection(self):
-        self.emmited_value.emit(self.global_index.row(), self.saved_options)
+        self.emitted_value.emit(self.global_index.row(), self.saved_options)
     
     def emit_selections_with_sub_options(self):
-        self.emmited_value_with_sub_options.emit(self.global_index.row(), self.saved_sub_options)
+        self.emitted_value_with_sub_options.emit(self.global_index.row(), self.saved_sub_options)
 
     def set_saved_options(self, options=[], sub_options={}):
         self.saved_options = options
         self.saved_sub_options = sub_options
 
+            
+
+
     #saves options and closes
     def close_Popup(self, event):
+        if self.scroll_Area.hasFocus():
+            return
         self.saved_options.clear()
         self.saved_options = [option.text() for option in self.options_checked if option.isChecked()]
        
@@ -178,17 +208,13 @@ class Options_Delegate(QStyledItemDelegate):
                 if sub_op.isChecked():
                     self.saved_sub_options[option] = sub_op.text()
                     break
+        #clear other data 
+        self.button_group_dict.clear()
 
-        print(self.saved_sub_options)
-        #self.parent().model().setData(self.current_index, ", ".join(self.saved_conditions), Qt.ItemDataRole.EditRole)
-        #self.controller.delegate_options_call(Constants.Delegate_Options.kConditions_Command_Call, self.global_index.row(), self.saved_conditions)
         self.emit_selection()
         self.emit_selections_with_sub_options()
         self.popup.close()
         self.scroll_Area.close()
 
     def get_selected(self):
-        return self.saved_options
-
-
-        
+        return self.saved_options        

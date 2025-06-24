@@ -1,10 +1,14 @@
+import sys
+import os
 
-from Systems.tracker import InititativeTracker
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
+from Systems.tracker import InitiativeTracker
 from creature import Creature
 from GUI.main_GUI import Initiative_Tracker_GUI
 
 def main():
-    tracker = InititativeTracker()
+    tracker = InitiativeTracker()
     tracker_GUI = Initiative_Tracker_GUI()
     tracker_GUI.run()
 
@@ -12,5 +16,3 @@ def main():
 if __name__ == "__main__":
     main()
         
-#TODO: Set up resistances and vulnerbailties
-#TODO: D20 logo up top that rolls a d20

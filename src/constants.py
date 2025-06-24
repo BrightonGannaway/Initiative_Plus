@@ -42,8 +42,8 @@ class Constants:
         kDictionary_Creatures_List_initiative_Title = "initiative"
         kDictionary_Creatures_List_hp_Title = "hp"
         kDictionary_Creatures_List_ac_Title = "ac"
-        kDictionary_Creatures_List_condtions_Title = "conditions"
-        kDictionary_Creatures_List_vulnerabilties_Title = "vul"
+        kDictionary_Creatures_List_conditions_Title = "conditions"
+        kDictionary_Creatures_List_vulnerabilities_Title = "vul"
         kDictionary_Creatures_List_resistances_Title = "res"
         kDictionary_Creatures_List_immunities_Title = "imu"
 
@@ -68,11 +68,11 @@ class Constants:
     
     class Fonts:
         kRound_Display = QFont()
-        kRound_Display.setFamily("Garamond")
+        kRound_Display.setFamily("Georgia")
         kRound_Display.setPixelSize(23)
 
         kCell_Display = QFont()
-        kCell_Display.setFamily("Garamond")
+        kCell_Display.setFamily("Georgia")
         kCell_Display.setPixelSize(14)
 
     class Properties:
@@ -87,11 +87,11 @@ class Constants:
 
         kConditions = (
              
-        "blinded", "charmed", "deafened", 
-        "frightened", "grappled", "incapacitated",
-        "invisible","paralyzed", "petrified",
-        "poisoned", "prone", "restrained", 
-        "unconscious"
+        "Blinded", "Charmed", "Deafened", 
+        "Frightened", "Grappled", "Incapacitated",
+        "Invisible","Paralyzed", "Petrified",
+        "Poisoned", "Prone", "Restrained", 
+        "Unconscious"
 
         )
 
@@ -99,7 +99,7 @@ class Constants:
             "vulnerable", "resistant", "immune"
         )
 
-        kVunerability = "vulnerable"
+        kVulnerability = "vulnerable"
         kResistance = "resistant"
         kImmunity = "immune"
     
@@ -109,22 +109,71 @@ class Constants:
 
     class Display_Constants:
         kCondition_HTML_Color_Format_Single_Digit_Dict = {
-            "blinded" : "<font color='black'>B</font> ",
-            "charmed" : "<font color='pink'>C</font> ",
-            "deafened" : "<font color='gray'>D</font> ",
-            "frightened" : "<font color='maroon'>F</font> ",
-            "grappled" : "<font color='saddlebrown'>G</font> ",
-            "incapacitated" : "<font color='darkslategrey'>I</font> ",
-            "invisible" : "<font color='white'>I</font> ",
-            "paralyzed" : "<font color='yellow'>P</font> ",
-            "petrified" : "<font color='rosybrown'>P</font> ",
-            "poisoned" : "<font color='seagreen'>P</font> ",
-            "prone" : "<font color='palevioletred'>P</font> ",
-            "restrained" : "<font color='palegoldenrod'>R</font> ",
-            "unconscious" : "<font color='purple'>U</font> "
+            "Blinded" : "<font color='beige'>B</font> ",
+            "Charmed" : "<font color='pink'>C</font> ",
+            "Deafened" : "<font color='darkgray'>D</font> ",
+            "Frightened" : "<font color='maroon'>F</font> ",
+            "Grappled" : "<font color='saddlebrown'>G</font> ",
+            "Incapacitated" : "<font color='darkslategrey'>I</font> ",
+            "Invisible" : "<font color='white'>I</font> ",
+            "Paralyzed" : "<font color='yellow'>P</font> ",
+            "Petrified" : "<font color='rosybrown'>P</font> ",
+            "Poisoned" : "<font color='darkgreen'>P</font> ",
+            "Prone" : "<font color='palevioletred'>P</font> ",
+            "Restrained" : "<font color='palegoldenrod'>R</font> ",
+            "Unconscious" : "<font color='purple'>U</font> "
+        }
+
+        kCondition_Tooltips = {
+            "Blinded" : " - A blinded creature can't see and automatically fails any ability checks that require sight" 
+                        "\n - Attack rolls against the creature have advantage, and the creature's attack rolls have disadvantage",
+            "Charmed" : " - A charmed creature can't attack the charmer or target the charmer with harmful abilities or magical effects"
+                        "\n - The charmer has advantage on any ability checks to interact socially with the creature",
+            "Deafened" : " - A deafened creature can't hear and automatically fails any ability check that requires hearing",
+            "Frightened" : " - A frightened creature has disadvantage on ability checks and attack rolls while its source of "
+                        "\nfear is within line of sight"
+                        "\n - the creature can't willingly move closer to its source of fear",
+            "Grappled" : " - A grappled creature's speed becomes 0, and it can't benefit from any bonus to its speed"
+                        "\n - The condition ends if the grappler is incapacitated (see the condition)"
+                        "\n - The condition also ends if an effect removes the grappled creature from the reach of the grappler"
+                        "\n or grappler effect, such as when the creature is hurled by the thunderwave spell",
+            "Incapacitated" : " - An incapacitated creature can't take actions or reactions",
+            "Invisible" : " - An invisible creature is impossible to see without the aid of magic or a special sense. For the"
+                        "\n purposes of hiding, the creature is heavily obscured. The creature's location can be detected by an"
+                        "\n noise it makes or any tracks it leaves."
+                        "\n - Attack rolls against the creature have disadvantage, and the creature's attack rolls have advantage",
+            "Paralyzed" : " - A paralyzed creature is incapacitated (see the condition) and can't move or speak"
+                        "\n - The creature automatically fails Strength and Dexterity saving throws"
+                        "\n - Attack rolls against the creature have advantage"
+                        "\n - Any attack that his the creature is a critical hit if the attacker is within 5 feet of that creature",
+            "Petrified" : " - A petrified creature is transformed, along with any nonmagical object it is wearing or carrying, into"
+                        "\n a solid inanimate substance (usually stone). Its weight increases by a factor of ten, and it ceases aging"
+                        "\n - The creature is incapacitated (see the condition), can't move or speak, and is unaware of its surroundings."
+                        "\n - Attack rolls against the creature have advantage"
+                        "\n - the creature automatically fails Strength and Dexterity saving throws"
+                        "\n - The creature has resistance to all damage"
+                        "\n - The creature is immune to poison and disease. although a poison or disease already in the system is"
+                        "\n suspended, not neutralized",
+            "Poisoned" : " - A poisoned creature has disadvantage on attack rolls and ability checks",
+            "Prone" : " - A prone creature's only movement option is to crawl, unless it stands up. and thereby ends the condition"
+                        "\n - The creature has disadvantage on attack rolls"
+                        "\n - An attack roll against the creature has advantage if the attacker is within 5 feet of the creature."
+                        "\n Otherwise, the attack roll has disadvantage",
+            "Restrained" : " - A restrained creature's speed becomes 0, and it can't benefit from any both to its speed"
+                        "\n Attack rolls against the creature advantage, the creature's attack rolls have disadvantage"
+                        "\n The creature has disadvantage on Dexterity saving throws",
+            "Stunned" : " - A stunned creature is incapacitated (see the condition), can't move, and can speak only falteringly"
+                        "\n - The creature automatically fails Strength and Dexterity saving throws"
+                        "\n - Attack rolls against the creature have advantage",
+            "Unconscious" : " - An unconscious creature is incapacitated (see the condition), can't move or speak, and is unaware"
+                        "\n of its surroundings"
+                        "\n - the creature drops whatever it's holding and falls prone (see the condition)"
+                        "\n - The creature automatically fails Strength and Dexterity saving throws"
+                        "\n - Attack rolls against the creature have advantage"
+                        "\n - Any attack that hits the creature is a critical hit if the attacker is within 5 feet of the creature"
         }
 
     class Image_Constants:
-        undo_image_path = "assets/undo_button_IT.png"   
-        redo_image_path = "assets/redo_button_IT.png"
-        shield_image_path = "assets/resistence_shield.png"
+        undo_image_path = "assets/undo.png"   
+        redo_image_path = "assets/redo.png"
+        shield_image_path = "assets/shield.png"

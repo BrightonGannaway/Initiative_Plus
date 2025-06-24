@@ -1,6 +1,4 @@
 #Creature class creates a creature along with 
-from rich.text import Text
-from rich.style import Style
 from constants import Constants
 
 class Creature:
@@ -73,34 +71,18 @@ class Creature:
         self.imu.clear()
 
     def set_defenses(self, defenses_dict):
+        self.vul.clear()
+        self.res.clear()
+        self.imu.clear()
         for dmg_type, defense_type in defenses_dict.items():
             match defense_type:
-                case Constants.Properties.kVunerability:
+                case Constants.Properties.kVulnerability:
                     self.vul.append(dmg_type)
                 case Constants.Properties.kResistance:
                     self.res.append(dmg_type)
                 case Constants.Properties.kImmunity:
                     self.imu.append(dmg_type)
     
-    def add_condition(self, condition_type):
-        if condition_type.lower() in self.CONDITIONS and condition_type.lower() not in self.conditions:
-            self.conditions.append(condition_type.lower())
-        if condition_type.lower() in self.CONDITIONS and condition_type.lower() not in self.conditions:
-            self.conditions.append(condition_type.lower())
-            return condition_type
-        else:
-            print(f"{self.name} already is {condition_type}")
-    
-    def remove_condition(self, condition_type):
-        if condition_type.lower() in self.conditions:
-            self.conditions.remove(condition_type)
-        else:
-            print(f"{self.name} is not already {condition_type}")
 
 
-    def print_creature(self):
-        print(self.name)
-        print("\t", self.initiative)
-        print("\t", self.hp)
-        print("\t", self.ac)
 
