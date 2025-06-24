@@ -528,6 +528,7 @@ class Initiative_Tracker_GUI(QMainWindow):
         self.show()
         self.pre_load_rows(3)
         self.dict_to_table(self.controller.get_tracker_dict())
+        self.app.setWindowIcon(QIcon("assets/Initiative_Plus_Icon_Rounded.icn"))
         sys.exit(self.app.exec())()
     
     #--------- asset handling ----------#
