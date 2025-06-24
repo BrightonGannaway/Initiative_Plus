@@ -35,6 +35,7 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
+    icon='Initiative_Plus_Icon_Rounded.icn'
 )
 app = BUNDLE(
     exe,
