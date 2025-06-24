@@ -6,7 +6,7 @@ QTableWidget {
     background-color: #13151b;
     color: #2f4a84;
     border: 2px solid #6b8378;
-    font-family: "Garamond";
+    font-family: "Georgia";
     font-size: 16px;
     padding: 2px;
 }
@@ -14,7 +14,7 @@ QTableWidget {
 QHeaderView::section {
     background-color: #8a9291;
     color: #282C34;
-    font-family: "Garamond";
+    font-family: "Georgia";
     font-size: 14px;
     font-weight: bold;
     border: none;
@@ -25,7 +25,7 @@ QPushButton {
     color: white;
     border: 2px solid #6b8378;
     font-size: 14px;
-    font-family: "Garamond";
+    font-family: "Georgia";
     padding: 6px;
     border-radius: 8px;
 }

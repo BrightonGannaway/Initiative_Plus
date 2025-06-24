@@ -1,13 +1,16 @@
-import sys
 import os
-import copy
+import sys
+
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
 
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, 
                             QTableWidget, QTableWidgetItem, QTableView, QPushButton, 
                             QLabel, QMenuBar, QMenu, QFileDialog, QMessageBox, QAbstractItemView,
                             QStyle, QHeaderView)
 from PyQt6.QtGui import QColor, QPixmap, QIcon, QMouseEvent, QFont, QAction, QKeySequence
-from PyQt6.QtCore import Qt, pyqtSignal, pyqtBoundSignal, QModelIndex, QSize, pyqtSlot
+from PyQt6.QtCore import Qt, QObject, pyqtSignal, pyqtBoundSignal, QModelIndex, QSize, pyqtSlot, QEvent
+from PyQt6.QtSvgWidgets import QSvgWidget
 
 
 from controller import Controller
@@ -19,8 +22,51 @@ from GUI.Clickable_Image import Clickable_Image
 from GUI.Popups.Error_Popup import Error_Popup
 
 
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
+class QTablewidgetCustom(QTableWidget):
+
+    emitted_value = pyqtSignal(int, int) #start index, dropped index
+
+    def mousePressEvent(self, e):
+        if e.button() == Qt.MouseButton.RightButton:
+            self.set_dragDrop(True)
+        return super().mousePressEvent(e)
+    
+    def mouseReleaseEvent(self, e):
+
+        if e.button() == Qt.MouseButton.RightButton:
+            self.clearSelection()
+            self.set_dragDrop(False)
+        return super().mouseReleaseEvent(e)
+    
+    def dropEvent(self, event):
+        event_pos = event.position().toPoint()
+        drag_drop_start_index = self.selectedIndexes()[0]
+        drag_drop_end_index = self.indexAt(event_pos)
+
+        self.emitted_value.emit(drag_drop_start_index.row(), drag_drop_end_index.row())
+        event.accept()
+
+
+        self.set_dragDrop(False)
+    
+    def set_dragDrop(self, setting: bool):
+        self.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows) if setting else self.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectItems)
+        self.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection) if setting else self.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
+        self.setDragEnabled(setting)
+        self.setAcceptDrops(setting)
+        self.setDragDropMode(QAbstractItemView.DragDropMode.InternalMove) if setting else self.setDragDropMode(QAbstractItemView.DragDropMode.NoDragDrop)
+        self.setDragEnabled(setting)
+        self.setDefaultDropAction(Qt.DropAction.MoveAction)
+        self.setDragDropOverwriteMode(False)
+        self.setDropIndicatorShown(setting)
+        # for row in range(self.rowCount()):
+        #     for col in range(self.columnCount()):
+        #         self.item(row, col).setFlags(self.item(row, col).flags() & ~Qt.ItemFlag.ItemIsEditable) if setting else self.item(row, col).setFlags(Qt.ItemFlag.ItemIsEditable)
+
+
+        if setting is False:
+            self.reset()
 
 class Initiative_Tracker_GUI(QMainWindow):
     def __init__(self):
@@ -72,7 +118,7 @@ class Initiative_Tracker_GUI(QMainWindow):
         self.main_layout = QHBoxLayout(self.central_widget)
 
         #table
-        self.table = QTableWidget()
+        self.table = QTablewidgetCustom()
         self.table.setColumnCount(5)
         self.table.setAlternatingRowColors(True)
         # self.table.setDragEnabled(True)
@@ -85,6 +131,8 @@ class Initiative_Tracker_GUI(QMainWindow):
                                                 Constants.Table_Constants.kColumn_Conditions_Title
                                             ])
         self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+        self.table.emitted_value.connect(self.drag_drop_receiver)
+        
         
         #delegates
         self.master_Delegate_Conditions = Cell_Aware_Delegate(self.table)
@@ -94,8 +142,8 @@ class Initiative_Tracker_GUI(QMainWindow):
         self.AC_delegates = {}
         self.table.setItemDelegateForColumn(Constants.Table_Constants.kColumn_AC_Index, self.master_Delegate_AC)
         self.damage_delegate = Damage_Delegate(self.table)
-        self.damage_delegate.emmited_value_damage.connect(self.damage_creature_row)
-        self.damage_delegate.emmited_value_heal.connect(self.heal_creature_row)
+        self.damage_delegate.emitted_value_damage.connect(self.damage_creature_row)
+        self.damage_delegate.emitted_value_heal.connect(self.heal_creature_row)
         self.table.setItemDelegateForColumn(Constants.Table_Constants.kColumn_HP_Index, self.damage_delegate)
         
         self.table.itemChanged.connect(self.table_updated)
@@ -107,7 +155,7 @@ class Initiative_Tracker_GUI(QMainWindow):
         self.tableView = QTableView()
 
         #Button Layout
-        self.verticle_button_layout = QVBoxLayout()
+        self.vertical_button_layout = QVBoxLayout()
         self.horizontal_button_layout = QHBoxLayout()
 
         #Dynamic Buttons
@@ -131,15 +179,15 @@ class Initiative_Tracker_GUI(QMainWindow):
         self.remove_row_button.clicked.connect(self.remove_selected_row)
 
         #Button Order
-        self.verticle_button_layout.addWidget(self.add_row_button)
-        self.verticle_button_layout.addWidget(self.remove_row_button)
-        self.verticle_button_layout.addWidget(self.clear_table_button)
-        self.verticle_button_layout.addWidget(self.next_turn_button)
-        self.verticle_button_layout.addWidget(self.sort_initiative_button)
+        self.vertical_button_layout.addWidget(self.add_row_button)
+        self.vertical_button_layout.addWidget(self.remove_row_button)
+        self.vertical_button_layout.addWidget(self.clear_table_button)
+        self.vertical_button_layout.addWidget(self.next_turn_button)
+        self.vertical_button_layout.addWidget(self.sort_initiative_button)
 
         #Undo Redo Buttons
-        self.pixmap_undo = QPixmap(Constants.Image_Constants.undo_image_path).scaled(self.width // 12, self.height // 12)
-        self.pixmap_redo = QPixmap(Constants.Image_Constants.redo_image_path).scaled(self.width // 12, self.height // 12)
+        self.pixmap_undo = QPixmap(self.resource_path(Constants.Image_Constants.undo_image_path)).scaled(self.width // 10, self.height // 10, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+        self.pixmap_redo = QPixmap(self.resource_path(Constants.Image_Constants.redo_image_path)).scaled(self.width // 10, self.height // 10, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
         self.undo_button = Clickable_Image()
         self.redo_button = Clickable_Image()
         self.undo_button.setPixmap(self.pixmap_undo)
@@ -149,16 +197,16 @@ class Initiative_Tracker_GUI(QMainWindow):
         self.horizontal_button_layout.addWidget(self.undo_button, alignment=Qt.AlignmentFlag.AlignLeft)
         self.horizontal_button_layout.addWidget(self.redo_button, alignment=Qt.AlignmentFlag.AlignRight)
 
-        self.verticle_button_layout.addLayout(self.horizontal_button_layout)
+        self.vertical_button_layout.addLayout(self.horizontal_button_layout)
         #add spacer to push buttons to top
-        self.verticle_button_layout.addStretch()
-        self.main_layout.addLayout(self.verticle_button_layout)
+        self.vertical_button_layout.addStretch()
+        self.main_layout.addLayout(self.vertical_button_layout)
 
         #display turn and round
         self.round_display = QLabel()
         self.round_display.setFont(Constants.Fonts.kRound_Display)
         self.round_display.setText(f"Round: {self.current_round} | Turn: {self.current_turn + 1}")
-        self.verticle_button_layout.addWidget(self.round_display, alignment=Qt.AlignmentFlag.AlignBottom)
+        self.vertical_button_layout.addWidget(self.round_display, alignment=Qt.AlignmentFlag.AlignBottom)
 
 
         #other values
@@ -168,12 +216,11 @@ class Initiative_Tracker_GUI(QMainWindow):
         self.is_Program_Cell_Change = False
 
 
-        #finally, load qss for styling
+        #load qss for styling
         self.dict_to_table(self.controller.get_tracker_dict())
         self.load_stylesheet()
-        self.update_Row_Backround(self.current_turn)
-     
-
+        self.update_Row_Background(self.current_turn)
+    
 
     #unused, for debugging purpose
     # def configureMatrix(self):
@@ -201,7 +248,7 @@ class Initiative_Tracker_GUI(QMainWindow):
     #-----------------------------------#
 
 
-    #tommorow update the validate integer method to return 0 if input is not an integer 
+    #tomorrow update the validate integer method to return 0 if input is not an integer 
     def table_updated(self, item):
         if not self.is_Program_Cell_Change:
             self.is_Program_Cell_Change = True
@@ -222,14 +269,14 @@ class Initiative_Tracker_GUI(QMainWindow):
     def add_creature_row(self, creatures=None, update_tracker=True):
 
         #create conditions delegate
-        op_delegate_conditions = Options_Delegate(self.table, icon = QStyle.PrimitiveElement.PE_IndicatorSpinPlus, options=Constants.Properties.kConditions, use_html_display=True)
-        op_delegate_conditions.emmited_value.connect(self.options_delegate_receiver)
+        op_delegate_conditions = Options_Delegate(self.table, icon = QStyle.PrimitiveElement.PE_IndicatorSpinPlus, options=Constants.Properties.kConditions, use_html_display=True, option_tooltips=Constants.Display_Constants.kCondition_Tooltips)
+        op_delegate_conditions.emitted_value.connect(self.options_delegate_receiver)
         self.condition_delegates[(self.table.rowCount(), Constants.Table_Constants.kColumn_Conditions_Index)] = op_delegate_conditions
         self.master_Delegate_Conditions.register_delegate(self.table.rowCount(), Constants.Table_Constants.kColumn_Conditions_Index, op_delegate_conditions)
 
         #create AC delegate
-        op_delegate_AC = Options_Delegate(self.table, icon=QPixmap(Constants.Image_Constants.shield_image_path), options=Constants.Properties.KDamage_Types[1:], sub_options=Constants.Properties.kDefenseOptions)
-        op_delegate_AC.emmited_value_with_sub_options.connect(self.options_delegate_receiver_for_sub_options)
+        op_delegate_AC = Options_Delegate(self.table, icon=QPixmap(self.resource_path(Constants.Image_Constants.shield_image_path)).scaled(30, 30, Qt.AspectRatioMode.KeepAspectRatioByExpanding, Qt.TransformationMode.SmoothTransformation), options=Constants.Properties.KDamage_Types[1:], sub_options=Constants.Properties.kDefenseOptions)
+        op_delegate_AC.emitted_value_with_sub_options.connect(self.options_delegate_receiver_for_sub_options)
         self.AC_delegates[(self.table.rowCount(), Constants.Table_Constants.kColumn_AC_Index)] = op_delegate_AC
         self.master_Delegate_AC.register_delegate(self.table.rowCount(), Constants.Table_Constants.kColumn_AC_Index, op_delegate_AC)
 
@@ -238,13 +285,15 @@ class Initiative_Tracker_GUI(QMainWindow):
             self.controller.create_Blank_Creature()
         #self.max_rows += 1
 
+    #upon the selection of 1 or more rows, this method creates a list of index applied
+    #returning nothing if no rows have been selected
     def remove_selected_row(self):
-        current_row = self.table.currentRow()
-        if current_row != -1:
-            self.dict_to_table(self.controller.remove_Creature(current_row))
+        current_rows = [index.row() for index in self.table.selectedIndexes()]
+        if len(current_rows) == 0: return
+        if current_rows != -1:
+            self.dict_to_table(self.controller.remove_Creature(current_rows))
 
-        #make sure to reset backround colors
-        self.update_Row_Backround(self.current_turn)
+        self.update_Row_Background(self.current_turn)
     
     @pyqtSlot(int, str, int)
     def damage_creature_row(self, row_index, dmg_type, dmg):
@@ -255,7 +304,6 @@ class Initiative_Tracker_GUI(QMainWindow):
     def heal_creature_row(self, row_index, hp):
         self.is_Program_Cell_Change = False
         self.dict_to_table(self.controller.heal_Creature(row_index, hp))
-
 
     def clear_table(self):
         self.dict_to_table(self.controller.clear_creatures())
@@ -269,15 +317,19 @@ class Initiative_Tracker_GUI(QMainWindow):
 
     def undo(self):
         self.dict_to_table(self.controller.undo(), False)
-        self.get_current_tracker_state()
     
     def redo(self):
         self.dict_to_table(self.controller.redo(), False)
-        self.get_current_tracker_state()
+
+
+    #-----------------------------------#
+    #----- Tracker data -> GUI  --------#
+    #-----------------------------------#
+
 
     def dict_to_table(self, dict, update_tracker=True):
 
-        #self.load_stylesheet()
+        #So that all updated cells aren't each individually passed to undo/redo stacks
         self.is_Program_Cell_Change = True
 
         #name of the list that holds all the creatures 
@@ -288,34 +340,32 @@ class Initiative_Tracker_GUI(QMainWindow):
         C_initiative_key = Constants.Data_Constants.kDictionary_Creatures_List_initiative_Title
         C_hp_key = Constants.Data_Constants.kDictionary_Creatures_List_hp_Title
         C_ac_key = Constants.Data_Constants.kDictionary_Creatures_List_ac_Title
-        C_condtions_key = Constants.Data_Constants.kDictionary_Creatures_List_condtions_Title
-        C_vul_key = Constants.Data_Constants.kDictionary_Creatures_List_vulnerabilties_Title
+        C_conditions_key = Constants.Data_Constants.kDictionary_Creatures_List_conditions_Title
+        C_vul_key = Constants.Data_Constants.kDictionary_Creatures_List_vulnerabilities_Title
         C_res_key = Constants.Data_Constants.kDictionary_Creatures_List_resistances_Title
         C_imu_key = Constants.Data_Constants.kDictionary_Creatures_List_immunities_Title
 
         row_count = self.table.rowCount()
         dict_row_count = len(dict[C_list_name])
 
-        #add and delete rows only when necessary
+        #add and delete rows only when tracker rows don't match
         if (dict_row_count > row_count):
             for r in range(dict_row_count - row_count):
                 self.add_creature_row(update_tracker=update_tracker)
-                #self.table.insertRow(self.table.rowCount())
         elif (row_count > dict_row_count):
             for _ in range(row_count - dict_row_count):
                 self.table.removeRow(self.table.rowCount() - 1)
 
         for row, creature in enumerate(dict[C_list_name]):
             # enumerate through each column and name of column
-            for col, key in enumerate([C_name_key, C_initiative_key, C_hp_key, C_ac_key, C_condtions_key]): 
+            for col, key in enumerate([C_name_key, C_initiative_key, C_hp_key, C_ac_key, C_conditions_key]): 
                 item = self.table.item(row, col) 
 
                 creature_attribute = creature[key]
                 updated_value = ""
 
 
-                #checks for empty list: TODO should be replaced by formatting to string in controller, conditon key check reverts to "" since conditions is displayed differently
-                if (isinstance(creature_attribute, list) and len(creature_attribute) == 0) or key == C_condtions_key:
+                if (isinstance(creature_attribute, list) and len(creature_attribute) == 0) or key == C_conditions_key:
                     updated_value = ""
                 else:
                     updated_value = str(creature_attribute) if creature_attribute is not None else ""
@@ -325,34 +375,36 @@ class Initiative_Tracker_GUI(QMainWindow):
 
             #handle option delegates
             con_delegate = self.condition_delegates.get((row, Constants.Table_Constants.kColumn_Conditions_Index))
-            con_delegate.set_saved_options(creature[C_condtions_key])
+            con_delegate.set_saved_options(creature[C_conditions_key])
 
-            conditions_display_sring = ""
-            for c in creature[C_condtions_key]:
+
+            conditions_display_string = ""
+            for c in creature[C_conditions_key]:
                 if c in Constants.Properties.kConditions:
-                    conditions_display_sring = conditions_display_sring + Constants.Display_Constants.kCondition_HTML_Color_Format_Single_Digit_Dict[c]
+                    conditions_display_string = conditions_display_string + Constants.Display_Constants.kCondition_HTML_Color_Format_Single_Digit_Dict[c]
             
-            #apply all defensive proporties(vul, res, imu) first get ac delegate
+            #apply all defensive properties(vul, res, imu) first get ac delegate
+            #dictionary is passed so that each damage type is hashed to the creatures vul, res, or imu
             ac_delegate = self.AC_delegates.get((row, Constants.Table_Constants.kColumn_AC_Index))
             defenses_dict = {}
             vul_list, res_list, imu_list = creature["vul"], creature["res"], creature["imu"]
             
             for vul in vul_list:
-                defenses_dict[vul] = Constants.Properties.kVunerability
+                defenses_dict[vul] = Constants.Properties.kVulnerability
             for res in res_list:
                 defenses_dict[res] = Constants.Properties.kResistance
             for imu in imu_list:
                 defenses_dict[imu] = Constants.Properties.kImmunity
             
             ac_delegate.set_saved_options(sub_options=defenses_dict)
-
-            #self.verify_item_and_display_text(item, row, Constants.Table_Constants.kColumn_Conditions_Index, conditions_display_sring)
+            
+            #make sure rows of conditions can hold data and aren't empty
             item = self.table.item(row, Constants.Table_Constants.kColumn_Conditions_Index)
             if item is None:
                 self.table.setItem(row, Constants.Table_Constants.kColumn_Conditions_Index, QTableWidgetItem())
 
-            #userrole inlays html without person actually seeing it
-            item.setData(Qt.ItemDataRole.UserRole, conditions_display_sring)
+            #userRole inlays html without person actually seeing it - To be extracted later in options delegate itself
+            item.setData(Qt.ItemDataRole.UserRole, conditions_display_string)
 
 
 
@@ -361,8 +413,10 @@ class Initiative_Tracker_GUI(QMainWindow):
         self.current_round = dict["Current Round"]
         self.current_turn = dict["Current Turn"]
 
-        self.update_Row_Backround(self.current_turn)
-        self.is_Program_Cell_Change = False
+        self.update_Row_Background(self.current_turn)
+        self.is_Program_Cell_Change = False 
+        
+        #let's so how exponentially slow this can get considering python's run time
 
  
     #-----------------------------------#
@@ -370,15 +424,14 @@ class Initiative_Tracker_GUI(QMainWindow):
     #-----------------------------------#
 
     def load_stylesheet(self):
-        script_dir = os.path.dirname(os.path.abspath(__file__))
-        qss_path = os.path.join(script_dir, "styles.css")
+        qss_path = self.resource_path("src/GUI/styles.css")
         try:
             with open(qss_path, "r") as file:
                 self.setStyleSheet(file.read())
         except FileNotFoundError:
             print(f"Error: {qss_path} not found.")
 
-    def update_Row_Backround(self, current_turn):
+    def update_Row_Background(self, current_turn):
         
         for row in range(self.table.rowCount()):
             for col in range(self.table.columnCount()):
@@ -441,6 +494,11 @@ class Initiative_Tracker_GUI(QMainWindow):
         self.is_Program_Cell_Change = False
         self.dict_to_table(self.controller.delegate_options_call(Constants.Delegate_Options.kDefense_Command_Call, row_index, defenses_dict))
 
+    @pyqtSlot(int, int)
+    def drag_drop_receiver(self, drag_drop_start_row, drag_drop_end_row):
+        self.is_Program_Cell_Change = False
+        self.dict_to_table(self.controller.drag_drop_handler(drag_drop_start_row, drag_drop_end_row))
+
     
     
     def pre_load_rows(self, preload_amt):
@@ -478,6 +536,16 @@ class Initiative_Tracker_GUI(QMainWindow):
         script_dir = os.path.dirname(os.path.abspath(__file__)) # Get the directory of the current script
         assets_dir = os.path.join(script_dir, 'assets') # Construct the path to the assets directory
         return os.path.join(assets_dir, asset_name) # Construct the full path to the asset
+
+    #used to access .css styles 
+    def resource_path(self, relative_path):
+        """ Get absolute path to resource, works for dev and for PyInstaller """
+        try:
+            # PyInstaller creates a temp folder and stores path in _MEIPASS
+            base_path = sys._MEIPASS
+        except Exception:
+            base_path = os.path.abspath(".")
+        return os.path.join(base_path, relative_path)
 
 
     

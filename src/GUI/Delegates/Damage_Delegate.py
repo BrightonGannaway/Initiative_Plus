@@ -10,8 +10,8 @@ from constants import Constants
 
 class Damage_Delegate(QStyledItemDelegate):
 
-    emmited_value_damage = pyqtSignal(int, str, int)
-    emmited_value_heal = pyqtSignal(int, int)
+    emitted_value_damage = pyqtSignal(int, str, int)
+    emitted_value_heal = pyqtSignal(int, int)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -139,10 +139,10 @@ class Damage_Delegate(QStyledItemDelegate):
         self.plus_button.clicked.connect(heal)
             
     def emit_damage(self):
-        self.emmited_value_damage.emit(self.global_index.row(), self.damage_Type_Box.currentText(), self.spin_box.value())
+        self.emitted_value_damage.emit(self.global_index.row(), self.damage_Type_Box.currentText(), self.spin_box.value())
 
     def emit_heal(self):
-        self.emmited_value_heal.emit(self.global_index.row(), self.spin_box.value())
+        self.emitted_value_heal.emit(self.global_index.row(), self.spin_box.value())
 
 
 #TODO: 2 bugs -> plus minus don't damage or heal but merely replace. Once spinwheel clicked QFrame thinks focus is still on spinwheel and thus popup doesnt close

@@ -1,19 +1,19 @@
 #controller acts as a middleman between GUI and cls.tracker processing data
 
-from Systems.tracker import InititativeTracker
+from Systems.tracker import InitiativeTracker
 from Systems.data_Processor import Data_Processor
 
 from constants import Constants
 
 class Controller:
 
-    tracker = InititativeTracker()
+    tracker = InitiativeTracker()
     processor = Data_Processor()
     
 
     #GUI -> cls.tracker methods
 
-    #make sure to have condition updates processed seperately
+    #make sure to have condition updates processed separately
     @classmethod
     def update_Creature_Item(cls, column_header, item):
         cls.save_state()
@@ -28,9 +28,9 @@ class Controller:
         return cls.get_tracker_dict()
     
     @classmethod
-    def remove_Creature(cls, row):
+    def remove_Creature(cls, rows):
         cls.save_state()
-        cls.tracker.remove_creature(row)
+        cls.tracker.remove_creature(rows[0], rows[len(rows) -1] + 1)
         return cls.get_tracker_dict()
     
     @classmethod   
@@ -87,7 +87,13 @@ class Controller:
             case Constants.Delegate_Options.kDefense_Command_Call:
                 cls.tracker.manage_creature(index, Constants.Delegate_Options.kDefense_Command_Call, value)
                 return cls.get_tracker_dict()
-            
+
+    @classmethod
+    def drag_drop_handler(cls, start_row, end_row):
+        cls.save_state()
+        cls.tracker.move_creature(start_row, end_row)
+        return cls.get_tracker_dict()
+
     @classmethod
     def save_to_file(cls, file_path):
         cls.tracker.save_to_file(file_path)

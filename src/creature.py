@@ -71,9 +71,12 @@ class Creature:
         self.imu.clear()
 
     def set_defenses(self, defenses_dict):
+        self.vul.clear()
+        self.res.clear()
+        self.imu.clear()
         for dmg_type, defense_type in defenses_dict.items():
             match defense_type:
-                case Constants.Properties.kVunerability:
+                case Constants.Properties.kVulnerability:
                     self.vul.append(dmg_type)
                 case Constants.Properties.kResistance:
                     self.res.append(dmg_type)
