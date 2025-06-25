@@ -10,8 +10,8 @@ time to battle in your favorite Table Top Role-Playing Game. This is my first la
 
 ## Downloads
 
-[MacOS (Apple Silicon)](./dist-mac/Initiative%20Plus.app/) <br><br>
-[Windows 11](./dist-windows/Initiative%20Plus.exe)
+[MacOS (Apple Silicon)](https://github.com/BrightonGannaway/Initiative_Plus/releases/download/v1.0.0/Initiative.Plus.app.zip) <br><br>
+[Windows 11](https://github.com/BrightonGannaway/Initiative_Plus/releases/download/v1.0.0/Initiative.Plus.exe)
 
 ## Features (as of version 1.0.0)
 
