@@ -44,10 +44,11 @@ class Options_Delegate(QStyledItemDelegate):
         self.arrow_Button.rect = arrow_rect
         self.arrow_Button.state = QStyle.StateFlag.State_Enabled
         
+        if isinstance(self.icon, QStyle.PrimitiveElement):
+            option.widget.style().drawPrimitive(self.icon or QStyle.PrimitiveElement.PE_IndicatorSpinPlus , self.arrow_Button, painter)
         if isinstance(self.icon, QPixmap):
             option.widget.style().drawItemPixmap(painter, arrow_rect, Qt.AlignmentFlag.AlignCenter, self.icon.scaled(self.arrow_width, self.arrow_width))
-            return
-        option.widget.style().drawPrimitive(self.icon or QStyle.PrimitiveElement.PE_IndicatorSpinPlus , self.arrow_Button, painter)
+
 
         if self.use_html_display:
             painter.save()
