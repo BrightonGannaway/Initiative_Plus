@@ -10,7 +10,8 @@ time to battle in your favorite Table Top Role-Playing Game. This is my first la
 
 ## Downloads
 
-[MacOS (Apple Silicon)](./dist/Initiative%20Plus.app/)
+[MacOS (Apple Silicon)](./dist-mac/Initiative%20Plus.app/) <br><br>
+[Windows 11](./dist-windows/Initiative%20Plus.exe)
 
 ## Features (as of version 1.0.0)
 
@@ -46,7 +47,7 @@ given below as well.
 #### **Needed Systems (contributors only)**
 
 - Currently there is support for MacOS (see 'Downloads' section)
-- Windows 11 version needed
+- Currently there is support for Windows 11 (see 'Downloads' section)
 - Windows 10 version desired
 - Linux is desired
     - Arch (btw) 

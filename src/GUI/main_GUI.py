@@ -269,7 +269,7 @@ class Initiative_Tracker_GUI(QMainWindow):
     def add_creature_row(self, creatures=None, update_tracker=True):
 
         #create conditions delegate
-        op_delegate_conditions = Options_Delegate(self.table, icon = QStyle.PrimitiveElement.PE_IndicatorSpinPlus, options=Constants.Properties.kConditions, use_html_display=True, option_tooltips=Constants.Display_Constants.kCondition_Tooltips)
+        op_delegate_conditions = Options_Delegate(self.table, icon=QPixmap(self.resource_path(Constants.Image_Constants.plus_image_path)).scaled(30, 30, Qt.AspectRatioMode.KeepAspectRatioByExpanding, Qt.TransformationMode.SmoothTransformation), options=Constants.Properties.kConditions, use_html_display=True, option_tooltips=Constants.Display_Constants.kCondition_Tooltips)
         op_delegate_conditions.emitted_value.connect(self.options_delegate_receiver)
         self.condition_delegates[(self.table.rowCount(), Constants.Table_Constants.kColumn_Conditions_Index)] = op_delegate_conditions
         self.master_Delegate_Conditions.register_delegate(self.table.rowCount(), Constants.Table_Constants.kColumn_Conditions_Index, op_delegate_conditions)
@@ -464,7 +464,10 @@ class Initiative_Tracker_GUI(QMainWindow):
     
     def save_as(self, file_path="initiative_data.json"):
         file_path = QFileDialog.getSaveFileName(None, "Save As", "", "JSON Files (*.json);;All Files (*)")[0]
-        self.save(file_path)
+        try:
+            self.save(file_path)
+        except FileNotFoundError:
+            return
         #displays file name without .json as window title
         self.setWindowTitle("D&D Initiative Tracker - " + file_path.rsplit("/", 1)[1].rsplit(".")[0]) 
     

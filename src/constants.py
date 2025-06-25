@@ -177,3 +177,4 @@ class Constants:
         undo_image_path = "assets/undo.png"   
         redo_image_path = "assets/redo.png"
         shield_image_path = "assets/shield.png"
+        plus_image_path = "assets/plus.png"
